@@ -1,0 +1,531 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="..\src\adaptmap.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\affine.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\affinecompose.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\arrayaccess.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\bardecode.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\baseline.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\bbuffer.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\bilateral.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\bilinear.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\binarize.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\binexpand.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\binreduce.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\blend.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\bmf.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\bmpio.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\bmpiostub.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\bootnumgen1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\bootnumgen2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\bootnumgen3.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\boxbasic.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\boxfunc1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\boxfunc2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\boxfunc3.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\boxfunc4.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\bytearray.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ccbord.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ccthin.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\classapp.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\colorcontent.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\coloring.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\colormap.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\colormorph.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\colorquant1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\colorquant2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\colorseg.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\colorspace.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\compare.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\conncomp.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\convertfiles.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\correlscore.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dewarp1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dewarp2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dewarp3.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dewarp4.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dnabasic.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dnafunc1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dnahash.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dwacomb.2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dwacomblow.2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\edge.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\encoding.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\enhance.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fhmtauto.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fhmtgen.1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fhmtgenlow.1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\finditalic.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\flipdetect.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fliphmtgen.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fmorphauto.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fmorphgen.1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fmorphgenlow.1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fpix1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fpix2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gifio.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gifiostub.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gplot.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graphics.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\graymorph.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\grayquant.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\heap.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\jbclass.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\jp2kheader.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\jp2kheaderstub.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\jp2kio.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\jp2kiostub.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\jpegio.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\jpegiostub.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\kernel.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\leptwin.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\libversions.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\list.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\map.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\maze.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\morph.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\morphapp.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\morphdwa.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\morphseq.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\numabasic.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\numafunc1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\numafunc2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pageseg.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\paintcmap.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\parseprotos.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\partition.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdfio1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdfio1stub.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdfio2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pdfio2stub.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pix1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pix2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pix3.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pix4.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pix5.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pixabasic.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pixacc.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pixafunc1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pixafunc2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pixalloc.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pixarith.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pixcomp.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pixconv.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pixlabel.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pixtiling.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pngio.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pngiostub.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pnmio.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\pnmiostub.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\projective.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psio1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psio1stub.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psio2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\psio2stub.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ptabasic.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ptafunc1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ptafunc2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ptra.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\quadtree.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\queue.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rank.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rbtree.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\readbarcode.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\readfile.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\recogbasic.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\recogdid.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\recogident.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\recogtrain.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\regutils.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rop.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\roplow.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rotate.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rotateam.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rotateorth.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\rotateshear.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\runlength.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sarray1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sarray2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\scale1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\scale2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\seedfill.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sel1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sel2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\selgen.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\shear.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\skew.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\spixio.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\stack.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\stringcode.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\strokes.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sudoku.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\textops.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\tiffio.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\tiffiostub.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils1.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils2.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\warper.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\watershed.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\webpio.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\webpiostub.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\writefile.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\zlibmem.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\zlibmemstub.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\convolve.c">
+      <Filter>Leptonica</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Leptonica">
+      <UniqueIdentifier>{6C06E002-A60A-469A-A631-9900DB7CB41C}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="config_auto.h" />
+    <ClInclude Include="endianness.h" />
+  </ItemGroup>
+</Project>
