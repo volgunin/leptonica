@@ -5,9 +5,6 @@
 /build*
 /.cppan*
 /win*
-/intermediate
-/debug
-/release
 /vs2017/.vs
 
 # files in prog without a .

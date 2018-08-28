@@ -75,7 +75,6 @@
     <ClCompile>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;HAVE_CONFIG_H;LIBLEPT_EXPORTS</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>6001;6011;6031;6054;6246;6287;6297;6340;6385;6386;6387;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
     </Link>
@@ -84,7 +83,6 @@
     <ClCompile>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;HAVE_CONFIG_H;LIBLEPT_EXPORTS</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>6001;6011;6031;6054;6246;6287;6297;6340;6385;6386;6387;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
     </Link>
@@ -93,7 +91,6 @@
     <ClCompile>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;HAVE_CONFIG_H;LIBLEPT_EXPORTS</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>6001;6011;6031;6054;6246;6287;6297;6340;6385;6386;6387;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
     </Link>
@@ -102,7 +99,6 @@
     <ClCompile>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS;HAVE_CONFIG_H;LIBLEPT_EXPORTS</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <DisableSpecificWarnings>6001;6011;6031;6054;6246;6287;6297;6340;6385;6386;6387;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
     </Link>
