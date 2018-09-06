@@ -145,7 +145,7 @@ typedef uintptr_t l_uintptr_t;
  *     * image wrapping write for pdf and ps.
  *  Setting any of these to 0 causes non-functioning stubs to be linked.
  */
-#define  USE_BMPIO        0
+#define  USE_BMPIO        1
 #define  USE_PNMIO        0
 #define  USE_JP2KHEADER   0
 #define  USE_PDFIO        0
