@@ -101,6 +101,7 @@
 #endif  /* HAVE_CONFIG_H */
 
 #include <string.h>
+#include <math.h>   /* for isnan */
 #include <sys/types.h>
 #ifndef _MSC_VER
 #include <unistd.h>
@@ -144,9 +145,6 @@ static l_int32   getTiffCompressedFormat(l_uint16 tiffcomp);
     /* Static function for memory I/O */
 static TIFF     *fopenTiffMemstream(const char *filename, const char *operation,
                                     l_uint8 **pdata, size_t *pdatasize);
-
-    /* Static dummy warning/error handler */
-static void  dummyHandler(const char *module, const char *fmt, va_list ap) {};
 
     /* This structure defines a transform to be performed on a TIFF image
      * (note that the same transformation can be represented in
@@ -468,14 +466,14 @@ TIFF  *tif;
 static PIX *
 pixReadFromTiffStream(TIFF  *tif)
 {
+char      *text;
 l_uint8   *linebuf, *data;
 l_uint16   spp, bps, bpp, photometry, tiffcomp, orientation;
 l_uint16  *redmap, *greenmap, *bluemap;
 l_int32    d, wpl, bpl, comptype, i, j, ncolors, rval, gval, bval;
 l_int32    xres, yres;
-l_uint32   w, h, tiffbpl, tiffword;
-l_uint32  *line, *ppixel, *tiffdata;
-l_uint32   read_oriented;
+l_uint32   w, h, tiffbpl, tiffword, read_oriented;
+l_uint32  *line, *ppixel, *tiffdata, *pixdata;
 PIX       *pix;
 PIXCMAP   *cmap;
 
@@ -489,16 +487,22 @@ PIXCMAP   *cmap;
         /* Use default fields for bps and spp */
     TIFFGetFieldDefaulted(tif, TIFFTAG_BITSPERSAMPLE, &bps);
     TIFFGetFieldDefaulted(tif, TIFFTAG_SAMPLESPERPIXEL, &spp);
-    bpp = bps * spp;
-    if (bpp > 32)
-        L_WARNING("bpp = %d; stripping 16 bit rgb samples down to 8\n",
-                  procName, bpp);
+    if (bps != 1 && bps != 2 && bps != 4 && bps != 8 && bps != 16) {
+        L_ERROR("invalid bps = %d\n", procName, bps);
+        return NULL;
+    }
     if (spp == 1)
         d = bps;
     else if (spp == 3 || spp == 4)
         d = 32;
     else
         return (PIX *)ERROR_PTR("spp not in set {1,3,4}", procName, NULL);
+    bpp = bps * spp;
+    if (bpp > 32) {  /* for rgb or rgba only */
+        L_WARNING("bpp = %d; stripping 16 bit rgb samples down to 8\n",
+                  procName, bpp);
+        bps = 8;
+    }
 
     TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
     TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
@@ -511,8 +515,14 @@ PIXCMAP   *cmap;
     wpl = pixGetWpl(pix);
     bpl = 4 * wpl;
 
-        /* Read the data */
-    if (spp == 1) {
+    TIFFGetFieldDefaulted(tif, TIFFTAG_COMPRESSION, &tiffcomp);
+
+        /* Thanks to Jeff Breidenbach, we now support reading 8 bpp
+         * images encoded in the long-deprecated old jpeg format,
+         * COMPRESSION_OJPEG.  TIFFReadScanline() fails on this format,
+         * so we use RGBA reading, which generates a 4 spp image, and
+         * pull out the red component. */
+    if (spp == 1 && tiffcomp != COMPRESSION_OJPEG) {
         linebuf = (l_uint8 *)LEPT_CALLOC(tiffbpl + 1, sizeof(l_uint8));
         for (i = 0 ; i < h ; i++) {
             if (TIFFReadScanline(tif, linebuf, i, 0) < 0) {
@@ -529,7 +539,7 @@ PIXCMAP   *cmap;
             pixEndianTwoByteSwap(pix);
         LEPT_FREE(linebuf);
     }
-    else {  /* rgb */
+    else {  /* rgb or old jpeg */
         if ((tiffdata = (l_uint32 *)LEPT_CALLOC((size_t)w * h,
                                                  sizeof(l_uint32))) == NULL) {
             pixDestroy(&pix);
@@ -545,16 +555,28 @@ PIXCMAP   *cmap;
             read_oriented = 1;
         }
 
-        line = pixGetData(pix);
-        for (i = 0 ; i < h ; i++, line += wpl) {
-            for (j = 0, ppixel = line; j < w; j++) {
-                    /* TIFFGet* are macros */
-                tiffword = tiffdata[i * w + j];
-                rval = TIFFGetR(tiffword);
-                gval = TIFFGetG(tiffword);
-                bval = TIFFGetB(tiffword);
-                composeRGBPixel(rval, gval, bval, ppixel);
-                ppixel++;
+        if (spp == 1) {  /* 8 bpp, old jpeg format */
+            pixdata = pixGetData(pix);
+            for (i = 0; i < h; i++) {
+                line = pixdata + i * wpl;
+                for (j = 0; j < w; j++) {
+                    tiffword = tiffdata[i * w + j];
+                    rval = TIFFGetR(tiffword);
+                    SET_DATA_BYTE(line, j, rval);
+                }
+            }
+        } else {  /* standard rgb */
+            line = pixGetData(pix);
+            for (i = 0; i < h; i++, line += wpl) {
+                for (j = 0, ppixel = line; j < w; j++) {
+                        /* TIFFGet* are macros */
+                    tiffword = tiffdata[i * w + j];
+                    rval = TIFFGetR(tiffword);
+                    gval = TIFFGetG(tiffword);
+                    bval = TIFFGetB(tiffword);
+                    composeRGBPixel(rval, gval, bval, ppixel);
+                    ppixel++;
+                }
             }
         }
         LEPT_FREE(tiffdata);
@@ -621,6 +643,9 @@ PIXCMAP   *cmap;
         }
     }
 
+    text = NULL;
+    TIFFGetField(tif, TIFFTAG_IMAGEDESCRIPTION, &text);
+    if (text) pixSetText(pix, text);
     return pix;
 }
 
@@ -633,10 +658,10 @@ PIXCMAP   *cmap;
  * \brief   pixWriteTiff()
  *
  * \param[in]    filename   to write to
- * \param[in]    pix
+ * \param[in]    pix        any depth, colormap will be removed
  * \param[in]    comptype   IFF_TIFF, IFF_TIFF_RLE, IFF_TIFF_PACKBITS,
  *                          IFF_TIFF_G3, IFF_TIFF_G4,
- *                          IFF_TIFF_LZW, IFF_TIFF_ZIP
+ *                          IFF_TIFF_LZW, IFF_TIFF_ZIP, IFF_TIFF_JPEG
  * \param[in]    modestr    "a" or "w"
  * \return  0 if OK, 1 on error
  *
@@ -668,7 +693,7 @@ pixWriteTiff(const char  *filename,
  * \param[in]    pix
  * \param[in]    comptype   IFF_TIFF, IFF_TIFF_RLE, IFF_TIFF_PACKBITS,
  *                          IFF_TIFF_G3, IFF_TIFF_G4,
- *                          IFF_TIFF_LZW, IFF_TIFF_ZIP
+ *                          IFF_TIFF_LZW, IFF_TIFF_ZIP, IFF_TIFF_JPEG
  * \param[in]    modestr    "a" or "w"
  * \param[in]    natags [optional] NUMA of custom tiff tags
  * \param[in]    savals [optional] SARRAY of values
@@ -718,6 +743,7 @@ pixWriteTiffCustom(const char  *filename,
                    NUMA        *nasizes)
 {
 l_int32  ret;
+PIX     *pix1;
 TIFF    *tif;
 
     PROCNAME("pixWriteTiffCustom");
@@ -726,13 +752,19 @@ TIFF    *tif;
         return ERROR_INT("filename not defined", procName, 1);
     if (!pix)
         return ERROR_INT("pix not defined", procName, 1);
+    if (pixGetColormap(pix))
+        pix1 = pixRemoveColormap(pix, REMOVE_CMAP_BASED_ON_SRC);
+    else
+        pix1 = pixClone(pix);
 
-    if ((tif = openTiff(filename, modestr)) == NULL)
+    if ((tif = openTiff(filename, modestr)) == NULL) {
+        pixDestroy(&pix1);
         return ERROR_INT("tif not opened", procName, 1);
-    ret = pixWriteToTiffStream(tif, pix, comptype, natags, savals,
+    }
+    ret = pixWriteToTiffStream(tif, pix1, comptype, natags, savals,
                                satypes, nasizes);
     TIFFClose(tif);
-
+    pixDestroy(&pix1);
     return ret;
 }
 
@@ -747,18 +779,19 @@ TIFF    *tif;
  * \param[in]    pix
  * \param[in]    comptype IFF_TIFF, IFF_TIFF_RLE, IFF_TIFF_PACKBITS,
  *                        IFF_TIFF_G3, IFF_TIFF_G4,
- *                        IFF_TIFF_LZW, IFF_TIFF_ZIP
+ *                        IFF_TIFF_LZW, IFF_TIFF_ZIP, IFF_TIFF_JPEG
  * \return  0 if OK, 1 on error
  *
  * <pre>
  * Notes:
  *      (1) This writes a single image to a file stream opened for writing.
- *      (2) For images with bpp > 1, this resets the comptype, if
+ *      (2) This removes any existing colormaps.
+ *      (3) For images with bpp > 1, this resets the comptype, if
  *          necessary, to write uncompressed data.
- *      (3) G3 and G4 are only defined for 1 bpp.
- *      (4) We only allow PACKBITS for bpp = 1, because for bpp > 1
+ *      (4) G3 and G4 are only defined for 1 bpp.
+ *      (5) We only allow PACKBITS for bpp = 1, because for bpp > 1
  *          it typically expands images that are not synthetically generated.
- *      (5) G4 compression is typically about twice as good as G3.
+ *      (6) G4 compression is typically about twice as good as G3.
  *          G4 is excellent for binary compression of text/line-art,
  *          but terrible for halftones and dithered patterns.  (In
  *          fact, G4 on halftones can give a file that is larger
@@ -782,7 +815,7 @@ pixWriteStreamTiff(FILE    *fp,
  * \param[in]    pix
  * \param[in]    comptype IFF_TIFF, IFF_TIFF_RLE, IFF_TIFF_PACKBITS,
  *                        IFF_TIFF_G3, IFF_TIFF_G4,
- *                        IFF_TIFF_LZW, IFF_TIFF_ZIP
+ *                        IFF_TIFF_LZW, IFF_TIFF_ZIP, IFF_TIFF_JPEG
  * \param[in]    modestr  "w" or "a"
  * \return  0 if OK, 1 on error
  */
@@ -792,6 +825,7 @@ pixWriteStreamTiffWA(FILE        *fp,
                      l_int32      comptype,
                      const char  *modestr)
 {
+PIX   *pix1;
 TIFF  *tif;
 
     PROCNAME("pixWriteStreamTiffWA");
@@ -803,21 +837,30 @@ TIFF  *tif;
     if (strcmp(modestr, "w") && strcmp(modestr, "a"))
         return ERROR_INT("modestr not 'w' or 'a'", procName, 1 );
 
-    if (pixGetDepth(pix) != 1 && comptype != IFF_TIFF &&
-        comptype != IFF_TIFF_LZW && comptype != IFF_TIFF_ZIP) {
+    if (pixGetColormap(pix))
+        pix1 = pixRemoveColormap(pix, REMOVE_CMAP_BASED_ON_SRC);
+    else
+        pix1 = pixClone(pix);
+    if (pixGetDepth(pix1) != 1 && comptype != IFF_TIFF &&
+        comptype != IFF_TIFF_LZW && comptype != IFF_TIFF_ZIP &&
+        comptype != IFF_TIFF_JPEG) {
         L_WARNING("invalid compression type for bpp > 1\n", procName);
         comptype = IFF_TIFF_ZIP;
     }
 
-    if ((tif = fopenTiff(fp, modestr)) == NULL)
+    if ((tif = fopenTiff(fp, modestr)) == NULL) {
+        pixDestroy(&pix1);
         return ERROR_INT("tif not opened", procName, 1);
+    }
 
-    if (pixWriteToTiffStream(tif, pix, comptype, NULL, NULL, NULL, NULL)) {
+    if (pixWriteToTiffStream(tif, pix1, comptype, NULL, NULL, NULL, NULL)) {
+        pixDestroy(&pix1);
         TIFFCleanup(tif);
         return ERROR_INT("tif write error", procName, 1);
     }
 
     TIFFCleanup(tif);
+    pixDestroy(&pix1);
     return 0;
 }
 
@@ -830,7 +873,8 @@ TIFF  *tif;
  * \param[in]    comptype  IFF_TIFF: for any image; no compression
  *                         IFF_TIFF_RLE, IFF_TIFF_PACKBITS: for 1 bpp only
  *                         IFF_TIFF_G4 and IFF_TIFF_G3: for 1 bpp only
- *                         IFF_TIFF_LZW, IFF_TIFF_ZIP: for any image
+ *                         IFF_TIFF_LZW, IFF_TIFF_ZIP: lossless for any image
+ *                         IFF_TIFF_JPEG: lossy 8 bpp gray or rgb
  * \param[in]    natags    [optional] NUMA of custom tiff tags
  * \param[in]    savals    [optional] SARRAY of values
  * \param[in]    satypes   [optional] SARRAY of types
@@ -958,6 +1002,8 @@ char      *text;
         TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_LZW);
     } else if (comptype == IFF_TIFF_ZIP) {
         TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_ADOBE_DEFLATE);
+    } else if (comptype == IFF_TIFF_JPEG) {
+        TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_JPEG);
     } else {
         L_WARNING("unknown tiff compression; using none\n", procName);
         TIFFSetField(tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
@@ -1577,10 +1623,15 @@ l_float32  fxres, fyres;
     foundxres = TIFFGetField(tif, TIFFTAG_XRESOLUTION, &fxres);
     foundyres = TIFFGetField(tif, TIFFTAG_YRESOLUTION, &fyres);
     if (!foundxres && !foundyres) return 1;
+    if (isnan(fxres) || isnan(fyres)) return 1;
     if (!foundxres && foundyres)
         fxres = fyres;
     else if (foundxres && !foundyres)
         fyres = fxres;
+
+        /* Avoid overflow into int32; set max fxres and fyres to 5 x 10^8 */
+    if (fxres < 0 || fxres > (1L << 29) || fyres < 0 || fyres > (1L << 29))
+        return ERROR_INT("fxres and/or fyres values are invalid", procName, 1);
 
     if (resunit == RESUNIT_CENTIMETER) {  /* convert to ppi */
         *pxres = (l_int32)(2.54 * fxres + 0.5);
@@ -1707,7 +1758,8 @@ TIFF    *tif;
     if (format != IFF_TIFF &&
         format != IFF_TIFF_G3 && format != IFF_TIFF_G4 &&
         format != IFF_TIFF_RLE && format != IFF_TIFF_PACKBITS &&
-        format != IFF_TIFF_LZW && format != IFF_TIFF_ZIP)
+        format != IFF_TIFF_LZW && format != IFF_TIFF_ZIP &&
+        format != IFF_TIFF_JPEG)
         return ERROR_INT("file not tiff format", procName, 1);
 
     if ((tif = fopenTiff(fp, "r")) == NULL)
@@ -1942,6 +1994,9 @@ l_int32  comptype;
     case COMPRESSION_ADOBE_DEFLATE:
         comptype = IFF_TIFF_ZIP;
         break;
+    case COMPRESSION_JPEG:
+        comptype = IFF_TIFF_JPEG;
+        break;
     default:
         comptype = IFF_TIFF;
         break;
@@ -2090,7 +2145,8 @@ fopenTiff(FILE        *fp,
     if (!modestring)
         return (TIFF *)ERROR_PTR("modestring not defined", procName, NULL);
 
-    TIFFSetWarningHandler(dummyHandler);  /* disable warnings */
+    TIFFSetWarningHandler(NULL);  /* disable warnings */
+    TIFFSetErrorHandler(NULL);  /* disable error messages */
 
     fseek(fp, 0, SEEK_SET);
     return TIFFClientOpen("TIFFstream", modestring, (thandle_t)fp,
@@ -2128,7 +2184,8 @@ TIFF  *tif;
     if (!modestring)
         return (TIFF *)ERROR_PTR("modestring not defined", procName, NULL);
 
-    TIFFSetWarningHandler(dummyHandler);  /* disable warnings */
+    TIFFSetWarningHandler(NULL);  /* disable warnings */
+    TIFFSetErrorHandler(NULL);  /* disable error messages */
 
     fname = genPathname(filename, NULL);
     tif = TIFFOpen(fname, modestring);
@@ -2408,7 +2465,8 @@ TIFF         *tif;
     else
         mstream = memstreamCreateForWrite(pdata, pdatasize);
 
-    TIFFSetWarningHandler(dummyHandler);  /* disable warnings */
+    TIFFSetWarningHandler(NULL);  /* disable warnings */
+    TIFFSetErrorHandler(NULL);  /* disable error messages */
 
     tif = TIFFClientOpen(filename, operation, (thandle_t)mstream,
                          tiffReadCallback, tiffWriteCallback,
@@ -2661,7 +2719,7 @@ PIX     *pix1, *pix2;
  * \param[in]    pix
  * \param[in]    comptype  IFF_TIFF, IFF_TIFF_RLE, IFF_TIFF_PACKBITS,
  *                         IFF_TIFF_G3, IFF_TIFF_G4,
- *                         IFF_TIFF_LZW, IFF_TIFF_ZIP
+ *                         IFF_TIFF_LZW, IFF_TIFF_ZIP, IFF_TIFF_JPEG
  * \return  0 if OK, 1 on error
  *
  *  Usage:
@@ -2687,7 +2745,7 @@ pixWriteMemTiff(l_uint8  **pdata,
  * \param[in]    pix
  * \param[in]    comptype  IFF_TIFF, IFF_TIFF_RLE, IFF_TIFF_PACKBITS,
  *                         IFF_TIFF_G3, IFF_TIFF_G4,
- *                         IFF_TIFF_LZW, IFF_TIFF_ZIP
+ *                         IFF_TIFF_LZW, IFF_TIFF_ZIP, IFF_TIFF_JPEG
  * \param[in]    natags    [optional] NUMA of custom tiff tags
  * \param[in]    savals    [optional] SARRAY of values
  * \param[in]    satypes   [optional] SARRAY of types
@@ -2721,7 +2779,8 @@ TIFF    *tif;
     if (!pix)
         return ERROR_INT("&pix not defined", procName, 1);
     if (pixGetDepth(pix) != 1 && comptype != IFF_TIFF &&
-        comptype != IFF_TIFF_LZW && comptype != IFF_TIFF_ZIP) {
+        comptype != IFF_TIFF_LZW && comptype != IFF_TIFF_ZIP &&
+        comptype != IFF_TIFF_JPEG) {
         L_WARNING("invalid compression type for bpp > 1\n", procName);
         comptype = IFF_TIFF_ZIP;
     }

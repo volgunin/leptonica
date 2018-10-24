@@ -131,6 +131,23 @@ They are <i>not</i> a complete listing of the modifications.
         Added some basic pixa functions for rotation and translation.
         Added an iterative method to find rectangular coverings for
           arbitrary connected components.
+        Converted two tests to reg tests running in alltests_reg:
+          ptra1_reg, ptra2_reg
+        Enabled read/write for standard jpeg compressed tiff images.
+        Enabled reading for the old (deprecated) jpeg-encoded tiffs.
+        Fix range selectors for pixa, pixaa, boxa, boxaa, pta:
+          Now, last = -1 goes to the end.
+        When reading tiff --> pix, insert IMAGEDESCRIPTION into text field.
+        Converted iotest to reg test iomisc_reg; added to alltests_reg
+        Converted rasterop_reg into a standard regression test; added
+          to alltests_reg.
+        Converted boxa2_reg and fhmtauto_reg into standard regression tests;
+          added to alltests_reg.
+        Split boxa sequence functions out of boxfunc4.c, into a new boxfunc5.c.
+        Simplified bmp header and made reading more clearly endian
+          agnostic (Juergen Buchmueller)
+        New boxa3_reg regression test. This tests sequences of boxes
+          by two new boxfunctions in boxfunc5.c.
 
 1.76.0  1 May 18
         Modify infrastructure to fix outstanding security issues. By default,

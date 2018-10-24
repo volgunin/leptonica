@@ -34,6 +34,7 @@
  *           PIXCMAP    *pixcmapCreateLinear()
  *           PIXCMAP    *pixcmapCopy()
  *           void        pixcmapDestroy()
+ *           l_int32     pixcmapIsValid()
  *           l_int32     pixcmapAddColor()
  *           l_int32     pixcmapAddRGBA()
  *           l_int32     pixcmapAddNewColor()
@@ -232,20 +233,21 @@ PIXCMAP  *cmap;
 PIXCMAP *
 pixcmapCopy(PIXCMAP  *cmaps)
 {
-l_int32   nbytes;
+l_int32   nbytes, valid;
 PIXCMAP  *cmapd;
 
     PROCNAME("pixcmapCopy");
 
     if (!cmaps)
         return (PIXCMAP *)ERROR_PTR("cmaps not defined", procName, NULL);
-    if (cmaps->nalloc > 256)
-        return (PIXCMAP *)ERROR_PTR("nalloc > 256", procName, NULL);
+    pixcmapIsValid(cmaps, &valid);
+    if (!valid)
+        return (PIXCMAP *)ERROR_PTR("invalid cmap", procName, NULL);
 
     cmapd = (PIXCMAP *)LEPT_CALLOC(1, sizeof(PIXCMAP));
     nbytes = cmaps->nalloc * sizeof(RGBA_QUAD);
     cmapd->array = (void *)LEPT_CALLOC(1, nbytes);
-    memcpy(cmapd->array, cmaps->array, nbytes);
+    memcpy(cmapd->array, cmaps->array, cmaps->n * sizeof(RGBA_QUAD));
     cmapd->n = cmaps->n;
     cmapd->nalloc = cmaps->nalloc;
     cmapd->depth = cmaps->depth;
@@ -280,6 +282,46 @@ PIXCMAP  *cmap;
     return;
 }
 
+/*!
+ * \brief   pixcmapIsValid()
+ *
+ * \param[in]    cmap
+ * \param[out]   pvalid   return 1 if valid; 0 if not
+ * \return  0 if OK, 1 on error or if cmap is not valid
+ */
+l_ok
+pixcmapIsValid(PIXCMAP  *cmap,
+               l_int32  *pvalid)
+{
+l_int32  d;
+
+    PROCNAME("pixcmapIsValid");
+
+    if (!pvalid)
+        return ERROR_INT("&valid not defined", procName, 1);
+    *pvalid = 0;
+    if (!cmap)
+        return ERROR_INT("cmap not defined", procName, 1);
+    if (!cmap->array)
+        return ERROR_INT("cmap array not defined", procName, 1);
+    d = cmap->depth;
+    if (d !=1 && d != 2 && d != 4 && d != 8) {
+        L_ERROR("invalid cmap depth: %d\n", procName, d);
+        return 1;
+    }
+    if (cmap->nalloc < 2 || cmap->nalloc > 256) {
+        L_ERROR("invalid cmap nalloc: %d\n", procName, cmap->nalloc);
+        return 1;
+    }
+    if (cmap->n < 0 || cmap->n > 256 || cmap->n > cmap->nalloc) {
+        L_ERROR("invalid cmap n: %d (nalloc = %d)\n", procName,
+                cmap->n, cmap->nalloc);
+        return 1;
+    }
+    *pvalid = 1;
+    return 0;
+}
+        
 
 /*!
  * \brief   pixcmapAddColor()
@@ -1490,7 +1532,8 @@ PIXCMAP   *cmapd;
         bwt = bwt / sum;
     }
 
-    cmapd = pixcmapCopy(cmaps);
+    if ((cmapd = pixcmapCopy(cmaps)) == NULL)
+        return (PIXCMAP *)ERROR_PTR("cmapd not made", procName, NULL);
     n = pixcmapGetCount(cmapd);
     for (i = 0; i < n; i++) {
         pixcmapGetColor(cmapd, i, &rval, &gval, &bval);

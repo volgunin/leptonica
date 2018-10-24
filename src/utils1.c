@@ -1106,7 +1106,8 @@ l_getFormattedDate()
 char        buf[128] = "", sep = 'Z';
 l_int32     gmt_offset, relh, relm;
 time_t      ut, lt;
-struct tm  *tptr;
+struct tm   Tm;
+struct tm  *tptr = &Tm;
 
     ut = time(NULL);
 
@@ -1119,7 +1120,11 @@ struct tm  *tptr;
            itself whether DST is in effect.  This is necessary because
            "gmtime" always sets "tm_isdst" to 0, which would tell
            "mktime" to presume that DST is not in effect. */
-    tptr = gmtime(&ut);
+#ifdef _WIN32
+    gmtime_s(tptr, &ut);
+#else
+    gmtime_r(&ut, tptr);
+#endif
     tptr->tm_isdst = -1;
     lt = mktime(tptr);
 
