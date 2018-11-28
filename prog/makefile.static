@@ -143,7 +143,7 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		blackwhite_reg.c \
 		blend1_reg.c blend2_reg.c blend3_reg.c blend4_reg.c \
 		blend5_reg.c boxa1_reg.c boxa2_reg.c boxa3_reg.c \
-		ccthin1_reg.c ccthin2_reg.c \
+		bytea_reg.c ccthin1_reg.c ccthin2_reg.c \
 		cmapquant_reg.c colorcontent_reg.c \
 		coloring_reg.c colorize_reg.c \
 		colormask_reg.c colormorph_reg.c colorquant_reg.c \
@@ -196,7 +196,7 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		autogentest1.c autogentest2.c barcodetest.c \
 		binarizefiles.c binarize_set.c bincompare.c \
 		blendcmaptest.c buffertest.c \
-		byteatest.c ccbordtest.c cctest1.c \
+		ccbordtest.c cctest1.c \
 		cleanpdf.c colorsegtest.c comparepages.c \
 		comparepixa.c comparetest.c \
 		concatpdf.c contrasttest.c \
@@ -228,9 +228,10 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		partitiontest.c pdfiotest.c percolatetest.c \
 		pixaatest.c pixafileinfo.c plottest.c \
 		printimage.c printsplitimage.c printtiff.c \
-		rbtreetest.c recog_bootnum.c recogsort.c \
-		recogtest1.c recogtest2.c recogtest3.c \
-		recogtest4.c recogtest5.c recogtest6.c \
+		rbtreetest.c \
+		recog_bootnum1.c recog_bootnum2.c recog_bootnum3.c \
+		recogsort.c recogtest1.c recogtest2.c recogtest3.c \
+		recogtest4.c recogtest5.c recogtest6.c recogtest7.c \
 		reducetest.c removecmap.c \
 		renderfonts.c rotatefastalt.c \
 		rotateorthtest1.c rotatetest1.c \
@@ -373,6 +374,9 @@ boxa2_reg:	boxa2_reg.o $(LEPTLIB)
 
 boxa3_reg:	boxa3_reg.o $(LEPTLIB)
 	$(CC) -o boxa3_reg boxa3_reg.o $(ALL_LIBS) $(EXTRALIBS)
+
+bytea_reg:	bytea_reg.o $(LEPTLIB)
+	$(CC) -o bytea_reg bytea_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
 ccthin1_reg:	ccthin1_reg.o $(LEPTLIB)
 	$(CC) -o ccthin1_reg ccthin1_reg.o $(ALL_LIBS) $(EXTRALIBS)
@@ -758,9 +762,6 @@ blendcmaptest:	blendcmaptest.o $(LEPTLIB)
 buffertest:	buffertest.o $(LEPTLIB)
 	$(CC) -o buffertest buffertest.o $(ALL_LIBS) $(EXTRALIBS)
 
-byteatest:	byteatest.o $(LEPTLIB)
-	$(CC) -o byteatest byteatest.o $(ALL_LIBS) $(EXTRALIBS)
-
 ccbordtest:	ccbordtest.o $(LEPTLIB)
 	$(CC) -o ccbordtest ccbordtest.o $(ALL_LIBS) $(EXTRALIBS)
 
@@ -1007,8 +1008,14 @@ printtiff:	printtiff.o $(LEPTLIB)
 rbtreetest:	rbtreetest.o $(LEPTLIB)
 	$(CC) -o rbtreetest rbtreetest.o $(ALL_LIBS) $(EXTRALIBS)
 
-recog_bootnum:	recog_bootnum.o $(LEPTLIB)
-	$(CC) -o recog_bootnum recog_bootnum.o $(ALL_LIBS) $(EXTRALIBS)
+recog_bootnum1:	recog_bootnum1.o $(LEPTLIB)
+	$(CC) -o recog_bootnum1 recog_bootnum1.o $(ALL_LIBS) $(EXTRALIBS)
+
+recog_bootnum2:	recog_bootnum2.o $(LEPTLIB)
+	$(CC) -o recog_bootnum2 recog_bootnum2.o $(ALL_LIBS) $(EXTRALIBS)
+
+recog_bootnum3:	recog_bootnum3.o $(LEPTLIB)
+	$(CC) -o recog_bootnum3 recog_bootnum3.o $(ALL_LIBS) $(EXTRALIBS)
 
 recogsort:	recogsort.o $(LEPTLIB)
 	$(CC) -o recogsort recogsort.o $(ALL_LIBS) $(EXTRALIBS)
@@ -1030,6 +1037,9 @@ recogtest5:	recogtest5.o $(LEPTLIB)
 
 recogtest6:	recogtest6.o $(LEPTLIB)
 	$(CC) -o recogtest6 recogtest6.o $(ALL_LIBS) $(EXTRALIBS)
+
+recogtest7:	recogtest7.o $(LEPTLIB)
+	$(CC) -o recogtest7 recogtest7.o $(ALL_LIBS) $(EXTRALIBS)
 
 reducetest:	reducetest.o $(LEPTLIB)
 	$(CC) -o reducetest reducetest.o $(ALL_LIBS) $(EXTRALIBS)
