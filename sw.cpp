@@ -33,7 +33,7 @@ void build(Solution &s)
         leptonica += "org.sw.demo.tiff-4"_dep;
         leptonica += "org.sw.demo.webmproject.webp-*"_dep;
 
-        if (leptonica.Variables["WORDS_BIGENDIAN"] == "1")
+        if (leptonica.Variables["WORDS_BIGENDIAN"] == 1)
             leptonica.Variables["ENDIANNESS"] = "L_BIG_ENDIAN";
         else
             leptonica.Variables["ENDIANNESS"] = "L_LITTLE_ENDIAN";
@@ -54,16 +54,17 @@ void build(Solution &s)
     }
 
     auto &progs = leptonica.addDirectory("progs");
-    progs.Scope = TargetScope::Test;
+    if (s.DryRun)
+        progs.Scope = TargetScope::Test;
 
     {
-        auto add_prog = [&progs, &leptonica](const String &name, const Files &files) -> decltype(auto)
+        auto add_prog = [&s, &progs, &leptonica](const String &name, const Files &files) -> decltype(auto)
         {
             auto &t = progs.addExecutable(name);
             t.setRootDirectory("prog");
             t += files;
             t += leptonica;
-            if (t.Settings.Native.CompilerType == CompilerType::MSVC)
+            if (s.Settings.Native.CompilerType == CompilerType::MSVC)
             {
                 for (auto *f : t.gatherSourceFiles())
                     f->BuildAs = NativeSourceFile::CPP;
