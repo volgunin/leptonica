@@ -56,9 +56,10 @@
  *           l_uint16   convertOnLittleEnd16()
  *           l_uint32   convertOnLittleEnd32()
  *
- *       File corruption operation
+ *       File corruption and byte replacement operations
  *           l_int32    fileCorruptByDeletion()
  *           l_int32    fileCorruptByMutation()
+ *           l_int32    fileReplaceBytes()
  *
  *       Generate random integer in given range
  *           l_int32    genRandomIntegerInRange()
@@ -138,26 +139,24 @@ setMsgSeverity(l_int32  newsev)
 l_int32  oldsev;
 char    *envsev;
 
-    PROCNAME("setMsgSeverity");
-
     oldsev = LeptMsgSeverity;
     if (newsev == L_SEVERITY_EXTERNAL) {
         envsev = getenv("LEPT_MSG_SEVERITY");
         if (envsev) {
             LeptMsgSeverity = atoi(envsev);
 #if DEBUG_SEV
-            L_INFO("message severity set to external\n", procName);
+            L_INFO("message severity set to external\n", "setMsgSeverity");
 #endif  /* DEBUG_SEV */
         } else {
 #if DEBUG_SEV
             L_WARNING("environment var LEPT_MSG_SEVERITY not defined\n",
-                      procName);
+                      "setMsgSeverity");
 #endif  /* DEBUG_SEV */
         }
     } else {
         LeptMsgSeverity = newsev;
 #if DEBUG_SEV
-        L_INFO("message severity set to %d\n", procName, newsev);
+        L_INFO("message severity set to %d\n", "setMsgSeverity", newsev);
 #endif  /* DEBUG_SEV */
     }
 
@@ -362,7 +361,7 @@ convertOnBigEnd32(l_uint32  wordin)
 
 
 /*---------------------------------------------------------------------*
- *                       File corruption operations                    *
+ *           File corruption and byte replacement operations           *
  *---------------------------------------------------------------------*/
 /*!
  * \brief   fileCorruptByDeletion()
@@ -485,6 +484,70 @@ l_uint8  *data;
 
     l_binaryWrite(fileout, "w", data, bytes);
     LEPT_FREE(data);
+    return 0;
+}
+
+
+/*!
+ * \brief   fileReplaceBytes()
+ *
+ * \param[in]    filein      input file
+ * \param[in]    start       start location for replacement
+ * \param[in]    nbytes      number of bytes to be removed
+ * \param[in]    newdata     replacement bytes
+ * \param[in]    newsize     size of replacement bytes
+ * \param[in]    fileout     output file
+ * \return  0 if OK, 1 on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) To remove %nbytes without replacement, set %newdata == NULL.
+ *      (2) One use is for replacing the date/time in a pdf file by a
+ *          string of 12 '0's, effectively removing the date without
+ *          invalidating the byte counters in the pdf file:
+ *              fileReplaceBytes(filein 86 12 (char *)"000000000000" 12 fileout
+ * </pre>
+ */
+l_ok
+fileReplaceBytes(const char  *filein,
+                 l_int32      start,
+                 l_int32      nbytes,
+                 l_uint8     *newdata,
+                 size_t       newsize,
+                 const char  *fileout)
+{
+l_int32   i, index;
+size_t    inbytes, outbytes;
+l_uint8  *datain, *dataout;
+
+    PROCNAME("fileReplaceBytes");
+
+    if (!filein || !fileout)
+        return ERROR_INT("filein and fileout not both specified", procName, 1);
+
+    datain = l_binaryRead(filein, &inbytes);
+    if (start + nbytes > inbytes)
+        L_WARNING("start + nbytes > length(filein) = %zu\n", procName, inbytes);
+
+    if (!newdata) newsize = 0;
+    outbytes = inbytes - nbytes + newsize;
+    if ((dataout = (l_uint8 *)LEPT_CALLOC(outbytes, 1)) == NULL) {
+        LEPT_FREE(datain);
+        return ERROR_INT("calloc fail for dataout", procName, 1);
+    }
+
+    for (i = 0; i < start; i++)
+        dataout[i] = datain[i];
+    for (i = start; i < start + newsize; i++)
+        dataout[i] = newdata[i - start];
+    index = start + nbytes;  /* for datain */
+    start += newsize;  /* for dataout */
+    for (i = start; i < outbytes; i++, index++)
+        dataout[i] = datain[index];
+    l_binaryWrite(fileout, "w", dataout, outbytes);
+
+    LEPT_FREE(datain);
+    LEPT_FREE(dataout);
     return 0;
 }
 
@@ -1146,16 +1209,23 @@ struct tm  *tptr = &Tm;
         /* Calls "difftime" to obtain the resulting difference in seconds,
          * because "time_t" is an opaque type, per the C standard. */
     gmt_offset = (l_int32) difftime(ut, lt);
-
     if (gmt_offset > 0)
         sep = '+';
     else if (gmt_offset < 0)
         sep = '-';
-
     relh = L_ABS(gmt_offset) / 3600;
     relm = (L_ABS(gmt_offset) % 3600) / 60;
 
-    strftime(buf, sizeof(buf), "%Y%m%d%H%M%S", localtime(&ut));
+#ifdef _WIN32
+  #ifdef _MSC_VER
+    localtime_s(tptr, &ut);
+  #else  /* mingw */
+    tptr = localtime(&ut);
+  #endif
+#else
+    localtime_r(&ut, tptr);
+#endif
+    strftime(buf, sizeof(buf), "%Y%m%d%H%M%S", tptr);
     sprintf(buf + 14, "%c%02d'%02d'", sep, relh, relm);
     return stringNew(buf);
 }

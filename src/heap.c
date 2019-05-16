@@ -77,8 +77,9 @@
 #include <string.h>
 #include "allheaders.h"
 
-static const l_int32  MIN_BUFFER_SIZE = 20;             /* n'importe quoi */
-static const l_int32  INITIAL_BUFFER_ARRAYSIZE = 128;   /* n'importe quoi */
+    /* Bounds on initial array size */
+static const l_uint32  MaxPtrArraySize = 100000;
+static const l_int32 InitialPtrArraySize = 20;      /*!< n'importe quoi */
 
 #define SWAP_ITEMS(i, j)       { void *tempitem = lh->array[(i)]; \
                                  lh->array[(i)] = lh->array[(j)]; \
@@ -94,29 +95,28 @@ static l_int32 lheapExtendArray(L_HEAP *lh);
 /*!
  * \brief   lheapCreate()
  *
- * \param[in]    nalloc size of ptr array to be alloc'd 0 for default
- * \param[in]    direction L_SORT_INCREASING, L_SORT_DECREASING
+ * \param[in]    n           size of ptr array to be alloc'd; use 0 for default
+ * \param[in]    direction   L_SORT_INCREASING, L_SORT_DECREASING
  * \return  lheap, or NULL on error
  */
 L_HEAP *
-lheapCreate(l_int32  nalloc,
+lheapCreate(l_int32  n,
             l_int32  direction)
 {
 L_HEAP  *lh;
 
     PROCNAME("lheapCreate");
 
-    if (nalloc < MIN_BUFFER_SIZE)
-        nalloc = MIN_BUFFER_SIZE;
+    if (n < InitialPtrArraySize || n > MaxPtrArraySize)
+        n = InitialPtrArraySize;
 
         /* Allocate ptr array and initialize counters. */
-    if ((lh = (L_HEAP *)LEPT_CALLOC(1, sizeof(L_HEAP))) == NULL)
-        return (L_HEAP *)ERROR_PTR("lh not made", procName, NULL);
-    if ((lh->array = (void **)LEPT_CALLOC(nalloc, sizeof(void *))) == NULL) {
+    lh = (L_HEAP *)LEPT_CALLOC(1, sizeof(L_HEAP));
+    if ((lh->array = (void **)LEPT_CALLOC(n, sizeof(void *))) == NULL) {
         lheapDestroy(&lh, FALSE);
         return (L_HEAP *)ERROR_PTR("ptr array not made", procName, NULL);
     }
-    lh->nalloc = nalloc;
+    lh->nalloc = n;
     lh->n = 0;
     lh->direction = direction;
     return lh;
@@ -126,17 +126,17 @@ L_HEAP  *lh;
 /*!
  * \brief   lheapDestroy()
  *
- * \param[in,out]   plh  to be nulled
- * \param[in]    freeflag TRUE to free each remaining struct in the array
+ * \param[in,out]   plh        will be set to null before returning
+ * \param[in]       freeflag   TRUE to free each remaining struct in the array
  * \return  void
  *
  * <pre>
  * Notes:
- *      (1) Use freeflag == TRUE when the items in the array can be
+ *      (1) Use %freeflag == TRUE when the items in the array can be
  *          simply destroyed using free.  If those items require their
  *          own destroy function, they must be destroyed before
  *          calling this function, and then this function is called
- *          with freeflag == FALSE.
+ *          with %freeflag == FALSE.
  *      (2) To destroy the lheap, we destroy the ptr array, then
  *          the lheap, and then null the contents of the input ptr.
  * </pre>
@@ -178,8 +178,8 @@ L_HEAP  *lh;
 /*!
  * \brief   lheapAdd()
  *
- * \param[in]    lh heap
- * \param[in]    item to be added to the tail of the heap
+ * \param[in]    lh      heap
+ * \param[in]    item    to be added to the tail of the heap
  * \return  0 if OK, 1 on error
  */
 l_ok
@@ -210,7 +210,7 @@ lheapAdd(L_HEAP  *lh,
 /*!
  * \brief   lheapExtendArray()
  *
- * \param[in]    lh heap
+ * \param[in]    lh    heap
  * \return  0 if OK, 1 on error
  */
 static l_int32
@@ -234,7 +234,7 @@ lheapExtendArray(L_HEAP  *lh)
 /*!
  * \brief   lheapRemove()
  *
- * \param[in]    lh heap
+ * \param[in]    lh    heap
  * \return  ptr to item popped from the root of the heap,
  *              or NULL if the heap is empty or on error
  */
@@ -264,7 +264,7 @@ void   *item;
 /*!
  * \brief   lheapGetCount()
  *
- * \param[in]    lh heap
+ * \param[in]    lh    heap
  * \return  count, or 0 on error
  */
 l_int32
@@ -286,8 +286,8 @@ lheapGetCount(L_HEAP  *lh)
 /*!
  * \brief   lheapSwapUp()
  *
- * \param[in]    lh heap
- * \param[in]    index of array corresponding to node to be swapped up
+ * \param[in]    lh      heap
+ * \param[in]    index   of array corresponding to node to be swapped up
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -348,7 +348,7 @@ l_float32  valp, valc;
 /*!
  * \brief   lheapSwapDown()
  *
- * \param[in]    lh heap
+ * \param[in]    lh   heap
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -440,7 +440,7 @@ l_float32  valp, valcl, valcr;
 /*!
  * \brief   lheapSort()
  *
- * \param[in]    lh heap, with internal array
+ * \param[in]    lh    heap, with internal array
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -469,7 +469,7 @@ l_int32  i;
 /*!
  * \brief   lheapSortStrictOrder()
  *
- * \param[in]    lh heap, with internal array
+ * \param[in]    lh    heap, with internal array
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -492,6 +492,9 @@ l_int32  i, index, size;
 
   if (!lh)
       return ERROR_INT("lh not defined", procName, 1);
+
+      /* Start from a sorted heap */
+  lheapSort(lh);
 
   size = lh->n;  /* save the actual size */
   for (i = 0; i < size; i++) {
@@ -516,8 +519,8 @@ l_int32  i, index, size;
 /*!
  * \brief   lheapPrint()
  *
- * \param[in]    fp file stream
- * \param[in]    lh heap
+ * \param[in]    fp    file stream
+ * \param[in]    lh    heap
  * \return  0 if OK; 1 on error
  */
 l_ok

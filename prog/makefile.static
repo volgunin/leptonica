@@ -122,15 +122,28 @@ endif
 # To enable webp read/write:
 #    (1) In src/environ.h:  #define  HAVE_LIBWEBP
 #    (2) Install libwebp
+#    (3) Include -lwebp in ALL_LIBS
+# To enable webpanim read/write:
+#    (1) In src/environ.h:  #define  HAVE_LIBWEBP_ANIM
+#    (2) Install libwebp with
+#          ./configure --enable-everything (to get mux/demux libs)
+#        Modify makefile.unix to add -fPIC:    
+#          CFLAGS = -O3 -DNDEBUG $(EXTRA_FLAGS) -fPIC
+#    (3) Include -lwebpmux in ALL_LIBS
 # To enable gif read/write:
 #    (1) In src/environ.h:  #define  HAVE_LIBGIF
 #    (2) Install libgif
+#    (3) Include -lgif in ALL_LIBS
+
 # Be sure LD_LIBRARY_PATH includes the appropriate library directories, such
 # as /usr/local/include, in which libwebp.so and/or libgif.so are installed
-#    (3) Use the appropriate line below for ALL_LIBS
+# Use or modify an appropriate line below for ALL_LIBS:
 ALL_LIBS =	$(LEPTLIB) -ltiff -ljpeg -lpng -lz -lm
 #ALL_LIBS =	$(LEPTLIB) -ltiff -ljpeg -lpng -lwebp -lz -lm
-#ALL_LIBS =	$(LEPTLIB) -ltiff -ljpeg -lpng -lgif -lwebp -lz -lm
+#ALL_LIBS =	$(LEPTLIB) -ltiff -ljpeg -lpng -lwebp -lwebpmux -lz -lm
+#ALL_LIBS =	$(LEPTLIB) -ltiff -ljpeg -lpng -lwebp -lopenjp2 -lz -lm
+#ALL_LIBS =	$(LEPTLIB) -ltiff -ljpeg -lpng -lwebp -lopenjp2 -lgif -lz -lm
+#ALL_LIBS =	$(LEPTLIB) -ltiff -ljpeg -lpng -lwebp -lwebpmux -lopenjp2 -lgif -lz -lm
 
 #########################################################################
 
@@ -190,7 +203,7 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		string_reg.c subpixel_reg.c \
 		texturefill_reg.c threshnorm_reg.c \
 		translate_reg.c warper_reg.c \
-		watershed_reg.c webpio_reg.c \
+		watershed_reg.c webpanimio_reg.c webpio_reg.c \
 		wordboxes_reg.c writetext_reg.c xformbox_reg.c \
 		adaptmap_dark.c arabic_lines.c arithtest.c \
 		autogentest1.c autogentest2.c barcodetest.c \
@@ -225,7 +238,8 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		modifyhuesat.c morphtest1.c \
 		numaranktest.c otsutest1.c otsutest2.c \
 		pagesegtest1.c pagesegtest2.c \
-		partitiontest.c pdfiotest.c percolatetest.c \
+		partifytest.c partitiontest.c \
+		pdfiotest.c percolatetest.c \
 		pixaatest.c pixafileinfo.c plottest.c \
 		printimage.c printsplitimage.c printtiff.c \
 		rbtreetest.c \
@@ -233,7 +247,7 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		recogsort.c recogtest1.c recogtest2.c recogtest3.c \
 		recogtest4.c recogtest5.c recogtest6.c recogtest7.c \
 		reducetest.c removecmap.c \
-		renderfonts.c rotatefastalt.c \
+		renderfonts.c replacebytes.c rotatefastalt.c \
 		rotateorthtest1.c rotatetest1.c \
 		runlengthtest.c scaleandtile.c \
 		scaletest1.c scaletest2.c \
@@ -720,6 +734,9 @@ warper_reg:	warper_reg.o $(LEPTLIB)
 watershed_reg:	watershed_reg.o $(LEPTLIB)
 	$(CC) -o watershed_reg watershed_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
+webpanimio_reg:	webpanimio_reg.o $(LEPTLIB)
+	$(CC) -o webpanimio_reg webpanimio_reg.o $(ALL_LIBS) $(EXTRALIBS)
+
 webpio_reg:	webpio_reg.o $(LEPTLIB)
 	$(CC) -o webpio_reg webpio_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
@@ -984,6 +1001,9 @@ pagesegtest1:	pagesegtest1.o $(LEPTLIB)
 pagesegtest2:	pagesegtest2.o $(LEPTLIB)
 	$(CC) -o pagesegtest2 pagesegtest2.o $(ALL_LIBS) $(EXTRALIBS)
 
+partifytest:	partifytest.o $(LEPTLIB)
+	$(CC) -o partifytest partifytest.o $(ALL_LIBS) $(EXTRALIBS)
+
 partitiontest:	partitiontest.o $(LEPTLIB)
 	$(CC) -o partitiontest partitiontest.o $(ALL_LIBS) $(EXTRALIBS)
 
@@ -1055,6 +1075,9 @@ removecmap:	removecmap.o $(LEPTLIB)
 
 renderfonts:	renderfonts.o $(LEPTLIB)
 	$(CC) -o renderfonts renderfonts.o $(ALL_LIBS) $(EXTRALIBS)
+
+replacebytes:	replacebytes.o $(LEPTLIB)
+	$(CC) -o replacebytes replacebytes.o $(ALL_LIBS) $(EXTRALIBS)
 
 rotatefastalt:	rotatefastalt.o $(LEPTLIB)
 	$(CC) -o rotatefastalt rotatefastalt.o $(ALL_LIBS) $(EXTRALIBS)

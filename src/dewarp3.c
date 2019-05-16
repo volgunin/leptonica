@@ -62,8 +62,6 @@ static PIX * pixApplyHorizDisparity(L_DEWARP *dew, PIX *pixs, l_int32 grayin);
 static BOXA *boxaApplyDisparity(L_DEWARP *dew, BOXA *boxa, l_int32 direction,
                                 l_int32 mapdir);
 
-
-
 /*----------------------------------------------------------------------*
  *                 Apply warping disparity array to pixa                *
  *----------------------------------------------------------------------*/
@@ -71,13 +69,13 @@ static BOXA *boxaApplyDisparity(L_DEWARP *dew, BOXA *boxa, l_int32 direction,
  * \brief   dewarpaApplyDisparity()
  *
  * \param[in]    dewa
- * \param[in]    pageno of page model to be used; may be a ref model
- * \param[in]    pixs image to be modified; can be 1, 8 or 32 bpp
- * \param[in]    grayin gray value, from 0 to 255, for pixels brought in;
- *                      use -1 to use pixels on the boundary of pixs
- * \param[in]    x, y origin for generation of disparity arrays
- * \param[out]   ppixd disparity corrected image
- * \param[in]    debugfile use NULL to skip writing this
+ * \param[in]    pageno      of page model to be used; may be a ref model
+ * \param[in]    pixs        image to be modified; can be 1, 8 or 32 bpp
+ * \param[in]    grayin      gray value, from 0 to 255, for pixels brought in;
+ *                           use -1 to use pixels on the boundary of pixs
+ * \param[in]    x, y        origin for generation of disparity arrays
+ * \param[out]   ppixd       disparity corrected image
+ * \param[in]    debugfile   use NULL to skip writing this
  * \return  0 if OK, 1 on error no models or ref models available
  *
  * <pre>
@@ -192,11 +190,11 @@ PIX       *pixv, *pixh;
  * \brief   dewarpaApplyInit()
  *
  * \param[in]    dewa
- * \param[in]    pageno of page model to be used; may be a ref model
- * \param[in]    pixs image to be modified; can be 1, 8 or 32 bpp
- * \param[in]    x, y origin for generation of disparity arrays
- * \param[out]   pdew dewarp to be used for this page
- * \param[in]    debugfile use NULL to skip writing this
+ * \param[in]    pageno      of page model to be used; may be a ref model
+ * \param[in]    pixs        image to be modified; can be 1, 8 or 32 bpp
+ * \param[in]    x, y        origin for generation of disparity arrays
+ * \param[out]   pdew        dewarp to be used for this page
+ * \param[in]    debugfile   use NULL to skip writing this
  * \return  0 if OK, 1 on error no models or ref models available
  *
  * <pre>
@@ -289,10 +287,10 @@ PIX       *pix1;
  * \brief   pixApplyVertDisparity()
  *
  * \param[in]    dew
- * \param[in]    pixs 1, 8 or 32 bpp
- * \param[in]    grayin gray value, from 0 to 255, for pixels brought in;
- *                      use -1 to use pixels on the boundary of pixs
- * \return  pixd modified to remove vertical disparity, or NULL on error
+ * \param[in]    pixs     1, 8 or 32 bpp
+ * \param[in]    grayin   gray value, from 0 to 255, for pixels brought in;
+ *                        use -1 to use pixels on the boundary of pixs
+ * \return  pixd   modified to remove vertical disparity, or NULL on error
  *
  * <pre>
  * Notes:
@@ -396,11 +394,11 @@ PIX        *pixd;
  * \brief   pixApplyHorizDisparity()
  *
  * \param[in]    dew
- * \param[in]    pixs 1, 8 or 32 bpp
- * \param[in]    grayin gray value, from 0 to 255, for pixels brought in;
- *                      use -1 to use pixels on the boundary of pixs
- * \return  pixd modified to remove horizontal disparity if possible,
- *              or NULL on error.
+ * \param[in]    pixs     1, 8 or 32 bpp
+ * \param[in]    grayin   gray value, from 0 to 255, for pixels brought in;
+ *                        use -1 to use pixels on the boundary of pixs
+ * \return  pixd   modified to remove horizontal disparity if possible,
+ *                 or NULL on error.
  *
  * <pre>
  * Notes:
@@ -509,15 +507,15 @@ PIX        *pixd;
  * \brief   dewarpaApplyDisparityBoxa()
  *
  * \param[in]    dewa
- * \param[in]    pageno of page model to be used; may be a ref model
- * \param[in]    pixs initial pix reference; for alignment and debugging
- * \param[in]    boxas boxa to be mapped
- * \param[in]    mapdir 1 if mapping forward from original to dewarped;
- *                      0 if backward
- * \param[in]    x, y origin for generation of disparity arrays with
- *                    respect to the source region
- * \param[out]   pboxad disparity corrected boxa
- * \param[in]    debugfile use NULL to skip writing this
+ * \param[in]    pageno      of page model to be used; may be a ref model
+ * \param[in]    pixs        initial pix reference; for alignment and debugging
+ * \param[in]    boxas       boxa to be mapped
+ * \param[in]    mapdir      1 if mapping forward from original to dewarped;
+ *                           0 if backward
+ * \param[in]    x, y        origin for generation of disparity arrays with
+ *                           respect to the source region
+ * \param[out]   pboxad      disparity corrected boxa
+ * \param[in]    debugfile   use NULL to skip writing this
  * \return  0 if OK, 1 on error no models or ref models available
  *
  * <pre>
@@ -634,10 +632,10 @@ PIX       *pixv, *pixh;
  *
  * \param[in]    dew
  * \param[in]    boxa
- * \param[in]    direction L_HORIZ or L_VERT
- * \param[in]    mapdir 1 if mapping forward from original to dewarped;
- *                      0 if backward
- * \return  boxad modified by the disparity, or NULL on error
+ * \param[in]    direction   L_HORIZ or L_VERT
+ * \param[in]    mapdir      1 if mapping forward from original to dewarped;
+ *                           0 if backward
+ * \return  boxad   modified by the disparity, or NULL on error
  */
 static BOXA *
 boxaApplyDisparity(L_DEWARP  *dew,
@@ -756,8 +754,8 @@ L_DEWARP  *dewt;
  * \brief   dewarpPopulateFullRes()
  *
  * \param[in]    dew
- * \param[in]    pix [optional], to give size of actual image
- * \param[in]    x, y origin for generation of disparity arrays
+ * \param[in]    pix     [optional], to give size of actual image
+ * \param[in]    x, y    origin for generation of disparity arrays
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -875,9 +873,9 @@ FPIX       *fpixt1, *fpixt2;
 /*!
  * \brief   fpixSampledDisparity()
  *
- * \param[in]    fpixs full resolution disparity model
- * \param[in]    sampling sampling factor
- * \return  fpixd sampled disparity model, or NULL on error
+ * \param[in]    fpixs      full resolution disparity model
+ * \param[in]    sampling   sampling factor
+ * \return  fpixd   sampled disparity model, or NULL on error
  *
  * <pre>
  * Notes:
@@ -930,14 +928,15 @@ FPIX      *fpixd;
     return fpixd;
 }
 
+static const l_float32  DefaultSlopeFactor = 0.1;  /* just a guess; fix it */
 
 /*!
  * \brief   fpixExtraHorizDisparity()
  *
- * \param[in]    fpixv vertical disparity model
- * \param[in]    factor conversion factor for vertical disparity slope;
- *                      use 0 for default
- * \param[out]   pxwid extra width to be added to dewarped pix
+ * \param[in]    fpixv    vertical disparity model
+ * \param[in]    factor   conversion factor for vertical disparity slope;
+ *                        use 0 for default
+ * \param[out]   pxwid    extra width to be added to dewarped pix
  * \return  fpixh, or NULL on error
  *
  * <pre>
@@ -972,7 +971,7 @@ FPIX       *fpixh;
     if (!pxwid)
         return (FPIX *)ERROR_PTR("&xwid not defined", procName, NULL);
     if (factor == 0.0)
-        factor = DEFAULT_SLOPE_FACTOR;
+        factor = DefaultSlopeFactor;
 
         /* Estimate horizontal disparity from the vertical disparity
          * difference between the top and bottom, normalized to the

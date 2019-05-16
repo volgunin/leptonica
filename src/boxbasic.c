@@ -133,7 +133,9 @@
 #include <string.h>
 #include "allheaders.h"
 
-static const l_int32  INITIAL_PTR_ARRAYSIZE = 20;   /*!< n'import quoi */
+    /* Bounds on initial array size */
+static const l_uint32  MaxPtrArraySize = 1000000;
+static const l_int32 InitialPtrArraySize = 20;      /*!< n'importe quoi */
 
 
 /*---------------------------------------------------------------------*
@@ -186,11 +188,9 @@ BOX  *box;
             return (BOX *)ERROR_PTR("y < 0 and box off +quad", procName, NULL);
     }
 
-    if ((box = (BOX *)LEPT_CALLOC(1, sizeof(BOX))) == NULL)
-        return (BOX *)ERROR_PTR("box not made", procName, NULL);
+    box = (BOX *)LEPT_CALLOC(1, sizeof(BOX));
     boxSetGeometry(box, x, y, w, h);
     box->refcount = 1;
-
     return box;
 }
 
@@ -501,8 +501,8 @@ BOXA  *boxa;
 
     PROCNAME("boxaCreate");
 
-    if (n <= 0)
-        n = INITIAL_PTR_ARRAYSIZE;
+    if (n <= 0 || n > MaxPtrArraySize)
+        n = InitialPtrArraySize;
 
     boxa = (BOXA *)LEPT_CALLOC(1, sizeof(BOXA));
     boxa->n = 0;
@@ -1225,8 +1225,8 @@ BOXAA  *baa;
 
     PROCNAME("boxaaCreate");
 
-    if (n <= 0)
-        n = INITIAL_PTR_ARRAYSIZE;
+    if (n <= 0 || n > MaxPtrArraySize)
+        n = InitialPtrArraySize;
 
     baa = (BOXAA *)LEPT_CALLOC(1, sizeof(BOXAA));
     if ((baa->boxa = (BOXA **)LEPT_CALLOC(n, sizeof(BOXA *))) == NULL) {

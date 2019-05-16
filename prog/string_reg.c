@@ -82,7 +82,7 @@ L_REGPARAMS  *rp;
                           (l_uint8 *)str1, strlen(str1));   /* 6 */
     lept_free(str1);
 
-        /* Finding all sequances */
+        /* Finding all sequences */
     str1 = (char *)l_binaryRead("kernel_reg.c", &size1);
     da = arrayFindEachSequence((l_uint8 *)str1, size1,
                                (l_uint8 *)"Destroy", 7);
@@ -90,7 +90,7 @@ L_REGPARAMS  *rp;
     l_dnaDestroy(&da);
     lept_free(str1);
 
-        /* Replacing all sequances */
+        /* Replacing all sequences */
     str1 = (char *)l_binaryRead("kernel_reg.c", &size1);
     data1 = arrayReplaceEachSequence((l_uint8 *)str1, size1,
                                      (l_uint8 *)"Destroy", 7,
@@ -157,5 +157,24 @@ L_REGPARAMS  *rp;
     sarrayDestroy(&sa1);
     sarrayDestroy(&sa2);
 
+        /* Test byte replacement in a file:
+         *   - replace 200 bytes by 10 bytes
+         *   - remove the 10 bytes
+         *   - recover the 200 bytes and insert back  */
+    fileReplaceBytes("kernel_reg.c", 100, 200, (l_uint8 *)"abcdefghij",
+                     sizeof("abcdefghij"), "/tmp/lept/string/junk1.txt");
+    str1 = (char *)l_binaryRead("kernel_reg.c", &size1);
+    fileReplaceBytes("/tmp/lept/string/junk1.txt", 100, sizeof("abcdefghij"),
+                     NULL, 0, "/tmp/lept/string/junk2.txt");
+    str2 = stringCopySegment(str1, 100, 200);
+    fileReplaceBytes("/tmp/lept/string/junk2.txt", 100, 0, (l_uint8 *)str2,
+                     strlen(str2), "/tmp/lept/string/junk3.txt");
+    str3 = (char *)l_binaryRead("/tmp/lept/string/junk3.txt", &size2);
+    regTestCompareStrings(rp, (l_uint8 *)str1, size1, (l_uint8 *)str3, size2);
+    lept_free(str1);
+    lept_free(str2);
+    lept_free(str3);
+
     return regTestCleanup(rp);
 }
+

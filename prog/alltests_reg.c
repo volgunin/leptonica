@@ -42,6 +42,12 @@
  *    large number of images will be displayed on the screen.
  */
 
+    /* Needed for: HAVE_LIBJP2K, HAVE_LIBGIF,
+     *             HAVE_LIBWEBP and HAVE_LIBWEBP_ANIM  */
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 
@@ -110,6 +116,7 @@ static const char *tests[] = {
                               "graymorph2_reg",
                               "grayquant_reg",
                               "hardlight_reg",
+                              "heap_reg",
                               "insert_reg",
                               "ioformats_reg",
                               "iomisc_reg",
@@ -175,6 +182,9 @@ static const char *tests[] = {
                               "translate_reg",
                               "warper_reg",
                               "watershed_reg",
+#if HAVE_LIBWEBP_ANIM
+                              "webpanimio_reg",
+#endif  /* HAVE_LIBWEBP_ANIM */
 #if HAVE_LIBWEBP
                               "webpio_reg",
 #endif  /* HAVE_LIBWEBP */
@@ -204,7 +214,7 @@ static char  mainName[] = "alltests_reg";
     l_getCurrentTime(&start, NULL);
     ntests = sizeof(tests) / sizeof(char *);
     fprintf(stderr, "Running alltests_reg:\n"
-            "This currently tests %d of the 128 regression test\n"
+            "This currently tests %d of the 130 regression test\n"
             "programs in the /prog directory.\n", ntests);
 
         /* Clear the output file if we're doing the set of reg tests */

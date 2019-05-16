@@ -70,7 +70,7 @@
     /* For more than this number of c.c. in a binarized image of
      * semi-perimeter (w + h) about 5000 or less, the O(n) binsort
      * is faster than the O(nlogn) shellsort.  */
-static const l_int32   MIN_COMPS_FOR_BIN_SORT = 200;
+static const l_int32   MinCompsForBinSort = 200;
 
 
 /*---------------------------------------------------------------------*
@@ -662,7 +662,7 @@ NUMA      *na, *naindex;
         return (BOXA *)ERROR_PTR("invalid sort order", procName, NULL);
 
         /* Use O(n) binsort if possible */
-    if (n > MIN_COMPS_FOR_BIN_SORT &&
+    if (n > MinCompsForBinSort &&
         ((sorttype == L_SORT_BY_X) || (sorttype == L_SORT_BY_Y) ||
          (sorttype == L_SORT_BY_WIDTH) || (sorttype == L_SORT_BY_HEIGHT) ||
          (sorttype == L_SORT_BY_PERIMETER)))
@@ -867,9 +867,9 @@ BOXA    *boxad;
  * \param[in]    boxas
  * \param[out]   pnaad    [optional] numaa with sorted indices
  *                        whose values are the indices of the input array
- * \param[in]    delta1   min overlap that permits aggregation of a box
+ * \param[in]    delta1   min separation that permits aggregation of a box
  *                        onto a boxa of horizontally-aligned boxes; pass 1
- * \param[in]    delta2   min overlap that permits aggregation of a box
+ * \param[in]    delta2   min separation that permits aggregation of a box
  *                        onto a boxa of horizontally-aligned boxes; pass 2
  * \param[in]    minh1    components less than this height either join an
  *                        existing boxa or are set aside for pass 2
@@ -890,11 +890,12 @@ BOXA    *boxad;
  *          is overlapping are joined.  After that, the boxes in each
  *          boxa are sorted horizontally, and finally the boxa are
  *          sorted vertically.
- *      (3) If delta1 < 0, the first pass allows aggregation when
- *          boxes in the same boxa do not overlap vertically.
- *          The distance by which they can miss and still be aggregated
- *          is the absolute value |delta1|.   Similar for delta2 on
- *          the second pass.
+ *      (3) If %delta1 > 0, the first pass allows aggregation when
+ *          boxes in the same boxa do not overlap vertically.  In fact,
+ *          %delta1 is the max distance by which they can miss and still
+ *          be aggregated.  If %delta1 < 0, the box must have vertical
+ *          overlap of at least abs(%delta1) with the boxa before it
+ *          can be merged.  Similar for delta2 on the second pass.
  *      (4) On the first pass, any component of height less than minh1
  *          cannot start a new boxa; it's put aside for later insertion.
  *      (5) On the second pass, any small component that doesn't align

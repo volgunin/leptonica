@@ -121,11 +121,7 @@
 
     /* Scales contrast enhancement factor to have a useful range
      * between 0.0 and 1.0 */
-static const l_float32  ENHANCE_SCALE_FACTOR = 5.;
-
-    /* Default number of pixels sampled to determine histogram */
-static const l_int32  DEFAULT_HISTO_SAMPLES = 100000;
-
+static const l_float32  EnhanceScaleFactor = 5.0;
 
 /*-------------------------------------------------------------*
  *         Gamma TRC (tone reproduction curve) mapping         *
@@ -573,7 +569,7 @@ NUMA      *na;
     if (factor == 0.0)
         return numaMakeSequence(0, 1, 256);  /* linear map */
 
-    scale = ENHANCE_SCALE_FACTOR;
+    scale = EnhanceScaleFactor;
     ymax = atan((l_float64)(1.0 * factor * scale));
     ymin = atan((l_float64)(-127. * factor * scale / 128.));
     dely = ymax - ymin;
@@ -1688,7 +1684,7 @@ l_uint32  *data, *line;
  * \param[in]    pixs     32 bpp rgb
  * \param[in]    factor   subsampling factor; integer >= 1
  * \param[out]   psat     average saturation
- * \return  pixd, or NULL on error
+ * \return  0 if OK, 1 on error
  */
 l_int32
 pixMeasureSaturation(PIX        *pixs,

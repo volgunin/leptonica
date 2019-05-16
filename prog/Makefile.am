@@ -1,11 +1,10 @@
 AUTOMAKE_OPTIONS = parallel-tests
-AM_CFLAGS = $(DEBUG_FLAGS)
 AM_CPPFLAGS = -I$(top_srcdir)/src -I$(top_builddir)/src
 LDADD = $(top_builddir)/src/liblept.la $(LIBM)
  
 INSTALL_PROGS = convertfilestopdf convertfilestops \
 	convertformat convertsegfilestopdf convertsegfilestops \
-	converttopdf converttops fileinfo xtractprotos
+	converttopdf converttops fileinfo imagetops xtractprotos
 
 AUTO_REG_PROGS = adaptmap_reg adaptnorm_reg affine_reg alphaops_reg \
 	alphaxform_reg baseline_reg bilateral2_reg \
@@ -25,7 +24,7 @@ AUTO_REG_PROGS = adaptmap_reg adaptnorm_reg affine_reg alphaops_reg \
 	findcorners_reg findpattern_reg \
 	fpix1_reg fpix2_reg genfonts_reg \
 	grayfill_reg graymorph1_reg graymorph2_reg \
-	grayquant_reg hardlight_reg \
+	grayquant_reg hardlight_reg heap_reg \
 	insert_reg ioformats_reg iomisc_reg italic_reg \
 	jbclass_reg jpegio_reg \
 	kernel_reg label_reg lineremoval_reg \
@@ -56,6 +55,10 @@ if HAVE_LIBWEBP
 AUTO_REG_PROGS += webpio_reg
 endif
 
+if HAVE_LIBWEBP_ANIM
+AUTO_REG_PROGS += webpanimio_reg
+endif
+
 if HAVE_LIBJP2K
 AUTO_REG_PROGS += jp2kio_reg
 endif
@@ -64,7 +67,7 @@ MANUAL_REG_PROGS = alltests_reg bilateral1_reg \
 	binmorph2_reg binmorph4_reg binmorph5_reg \
 	dwamorph2_reg \
 	files_reg flipdetect_reg fmorphauto_reg \
-	heap_reg morphseq_reg pixa1_reg \
+	morphseq_reg pixa1_reg \
 	pixalloc_reg pixtile_reg \
 	smallpix_reg smoothedge_reg
 
@@ -87,7 +90,7 @@ OTHER_PROGS = adaptmap_dark \
 	flipselgen fmorphautogen \
 	fpixcontours gammatest graphicstest graymorphtest \
 	hashtest histotest histoduptest htmlviewer \
-	imagetops jbcorrelation jbrankhaus jbwords \
+	jbcorrelation jbrankhaus jbwords \
 	listtest livre_adapt livre_hmt \
 	livre_makefigs livre_orient \
 	livre_pageseg livre_seedgen livre_tophat \
@@ -95,14 +98,15 @@ OTHER_PROGS = adaptmap_dark \
 	modifyhuesat morphtest1 \
 	numaranktest otsutest1 otsutest2 \
 	pagesegtest1 pagesegtest2 \
-	partitiontest pdfiotest percolatetest \
+	partifytest partitiontest \
+	pdfiotest percolatetest \
 	pixaatest pixafileinfo plottest \
 	printimage printsplitimage printtiff rbtreetest \
 	recog_bootnum1 recog_bootnum2 recog_bootnum3 \
 	recogsort recogtest1 recogtest2 recogtest3 \
 	recogtest4 recogtest5 recogtest6 recogtest7 \
 	reducetest removecmap \
-	renderfonts rotatefastalt \
+	renderfonts replacebytes rotatefastalt \
 	rotateorthtest1 rotatetest1 \
 	runlengthtest scaleandtile \
 	scaletest1 scaletest2 \
