@@ -41,6 +41,10 @@
  *      are not too close to gray pixels.
  *         PIX       *pixMaskOverColorPixels()
  *
+ *      Generates a mask over pixels that have little color and
+ *      are not too bright.
+ *         PIX       *pixMaskOverGrayPixels()
+ *
  *      Generates mask over pixels within a prescribed cube in RGB space
  *         PIX       *pixMaskOverColorRange()
  *
@@ -548,6 +552,76 @@ PIXCMAP   *cmap;
     }
 
     pixDestroy(&pixc);
+    return pixd;
+}
+
+
+/* ----------------------------------------------------------------------- *
+ *      Generates a mask over pixels that have little color and            *
+ *      are not too bright                                                 *
+ * ----------------------------------------------------------------------- */
+/*!
+ * \brief   pixMaskOverGrayPixels()
+ *
+ * \param[in]    pixs      32 bpp rgb
+ * \param[in]    maxlimit  only consider pixels with max component <= %maxlimit
+ * \param[in]    satlimit  only consider pixels with saturation <= %satlimit
+ * \return  pixd (1 bpp), or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) This generates a mask over rgb pixels that are gray (i.e.,
+ *          have low saturation) and are not too bright.  For example, if
+ *          we know that the gray pixels in %pixs have saturation
+ *          (max - min) less than 10, and brightness (max) less than 200,
+ *             pixMaskOverGrayPixels(pixs, 220, 10)
+ *          will generate a mask over the gray pixels.  Other pixels that
+ *          are not too dark and have a relatively large saturation will
+ *          be little affected.
+ *      (2) The algorithm is related to pixDarkenGray().
+ * </pre>
+ */
+PIX *
+pixMaskOverGrayPixels(PIX     *pixs,
+                      l_int32  maxlimit,
+                      l_int32  satlimit)
+{
+l_int32    w, h, i, j, wpls, wpld;
+l_int32    rval, gval, bval, minrg, min, maxrg, max, sat;
+l_uint32  *datas, *datad, *lines, *lined;
+PIX       *pixd;
+
+    PROCNAME("pixMaskOverGrayPixels");
+
+    if (!pixs || pixGetDepth(pixs) != 32)
+        return (PIX *)ERROR_PTR("pixs undefined or not 32 bpp", procName, NULL);
+    if (maxlimit < 0 || maxlimit > 255)
+        return (PIX *)ERROR_PTR("invalid maxlimit", procName, NULL);
+    if (satlimit < 1)
+        return (PIX *)ERROR_PTR("invalid satlimit", procName, NULL);
+
+    pixGetDimensions(pixs, &w, &h, NULL);
+    datas = pixGetData(pixs);
+    wpls = pixGetWpl(pixs);
+    if ((pixd = pixCreate(w, h, 1)) == NULL)
+        return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
+    datad = pixGetData(pixd);
+    wpld = pixGetWpl(pixd);
+
+    for (i = 0; i < h; i++) {
+        lines = datas + i * wpls;
+        lined = datad + i * wpld;
+        for (j = 0; j < w; j++) {
+            extractRGBValues(lines[j], &rval, &gval, &bval);
+            minrg = L_MIN(rval, gval);
+            min = L_MIN(minrg, bval);
+            maxrg = L_MAX(rval, gval);
+            max = L_MAX(maxrg, bval);
+            sat = max - min;
+            if (max <= maxlimit && sat <= satlimit)
+                SET_DATA_BIT(lined, j);
+        }
+    }
     return pixd;
 }
 

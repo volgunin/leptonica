@@ -180,7 +180,7 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		iomisc_reg.c italic_reg.c \
 		jbclass_reg.c jp2kio_reg.c jpegio_reg.c kernel_reg.c \
 		label_reg.c lineremoval_reg.c locminmax_reg.c \
-		logicops_reg.c lowaccess_reg.c \
+		logicops_reg.c lowaccess_reg.c lowsat_reg.c \
 		maze_reg.c morphseq_reg.c mtiff_reg.c \
 		multitype_reg.c nearline_reg.c newspaper_reg.c \
 		numa1_reg.c numa2_reg.c \
@@ -194,7 +194,7 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		psio_reg.c psioseg_reg.c \
 		pta_reg.c ptra1_reg.c ptra2_reg.c quadtree_reg.c \
 		rankbin_reg.c rankhisto_reg.c rank_reg.c \
-		rasteropip_reg.c rasterop_reg.c \
+		rasteropip_reg.c rasterop_reg.c rectangle_reg.c \
 		rotate1_reg.c rotate2_reg.c rotateorth_reg.c \
 		scale_reg.c seedspread_reg.c selio_reg.c \
 		shear1_reg.c shear2_reg.c skew_reg.c \
@@ -217,7 +217,8 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		convertformat.c \
 		convertsegfilestopdf.c convertsegfilestops.c \
 		converttogray.c converttopdf.c converttops.c \
-		cornertest.c corrupttest.c croptest.c croptext.c \
+		cornertest.c corrupttest.c \
+		croptest.c croptext.c deskew_it.c \
 		dewarprules.c dewarptest1.c dewarptest2.c \
 		dewarptest3.c dewarptest4.c dewarptest5.c \
 		digitprep1.c displayboxa.c displayboxes_on_pixa.c \
@@ -247,10 +248,11 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		recogsort.c recogtest1.c recogtest2.c recogtest3.c \
 		recogtest4.c recogtest5.c recogtest6.c recogtest7.c \
 		reducetest.c removecmap.c \
-		renderfonts.c replacebytes.c rotatefastalt.c \
+		renderfonts.c replacebytes.c \
+		rotatefastalt.c rotate_it.c \
 		rotateorthtest1.c rotatetest1.c \
 		runlengthtest.c scaleandtile.c \
-		scaletest1.c scaletest2.c \
+		scale_it.c scaletest1.c scaletest2.c \
 		seedfilltest.c settest.c sharptest.c \
 		sheartest.c showedges.c \
 		skewtest.c sorttest.c splitimage2pdf.c \
@@ -563,6 +565,9 @@ locminmax_reg:	locminmax_reg.o $(LEPTLIB)
 logicops_reg:	logicops_reg.o $(LEPTLIB)
 	$(CC) -o logicops_reg logicops_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
+lowsat_reg:	lowsat_reg.o $(LEPTLIB)
+	$(CC) -o lowsat_reg lowsat_reg.o $(ALL_LIBS) $(EXTRALIBS)
+
 lowaccess_reg:	lowaccess_reg.o $(LEPTLIB)
 	$(CC) -o lowaccess_reg lowaccess_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
@@ -673,6 +678,9 @@ rasterop_reg:	rasterop_reg.o $(LEPTLIB)
 
 rasteropip_reg:	rasteropip_reg.o $(LEPTLIB)
 	$(CC) -o rasteropip_reg rasteropip_reg.o $(ALL_LIBS) $(EXTRALIBS)
+
+rectangle_reg:	rectangle_reg.o $(LEPTLIB)
+	$(CC) -o rectangle_reg rectangle_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
 rotate1_reg:	rotate1_reg.o $(LEPTLIB)
 	$(CC) -o rotate1_reg rotate1_reg.o $(ALL_LIBS) $(EXTRALIBS)
@@ -844,6 +852,9 @@ croptest:	croptest.o $(LEPTLIB)
 
 croptext:	croptext.o $(LEPTLIB)
 	$(CC) -o croptext croptext.o $(ALL_LIBS) $(EXTRALIBS)
+
+deskew_it:	deskew_it.o $(LEPTLIB)
+	$(CC) -o deskew_it deskew_it.o $(ALL_LIBS) $(EXTRALIBS)
 
 dewarprules:	dewarprules.o $(LEPTLIB)
 	$(CC) -o dewarprules dewarprules.o $(ALL_LIBS) $(EXTRALIBS)
@@ -1082,6 +1093,9 @@ replacebytes:	replacebytes.o $(LEPTLIB)
 rotatefastalt:	rotatefastalt.o $(LEPTLIB)
 	$(CC) -o rotatefastalt rotatefastalt.o $(ALL_LIBS) $(EXTRALIBS)
 
+rotate_it:	rotate_it.o $(LEPTLIB)
+	$(CC) -o rotate_it rotate_it.o $(ALL_LIBS) $(EXTRALIBS)
+
 rotateorthtest1:	rotateorthtest1.o $(LEPTLIB)
 	$(CC) -o rotateorthtest1 rotateorthtest1.o $(ALL_LIBS) $(EXTRALIBS)
 
@@ -1093,6 +1107,9 @@ runlengthtest:	runlengthtest.o $(LEPTLIB)
 
 scaleandtile:	scaleandtile.o $(LEPTLIB)
 	$(CC) -o scaleandtile scaleandtile.o $(ALL_LIBS) $(EXTRALIBS)
+
+scale_it:	scale_it.o $(LEPTLIB)
+	$(CC) -o scale_it scale_it.o $(ALL_LIBS) $(EXTRALIBS)
 
 scaletest1:	scaletest1.o $(LEPTLIB)
 	$(CC) -o scaletest1 scaletest1.o $(ALL_LIBS) $(EXTRALIBS)
