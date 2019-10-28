@@ -167,6 +167,39 @@
  *
  *  A high-level interface, pixOrientCorrect() combines the detection
  *  of the orientation with the rotation decision and the rotation itself.
+ *
+ *  Finally, use can be made of programs such as exiftool and convert to
+ *  read exif camera orientation data in jpeg files and conditionally rotate.
+ *  Here is an example shell script, made by Dan9er:
+ *  ==================================================================
+ *  #!/bin/sh
+ *  #   orientByExif.sh
+ *  #   Dependencies: exiftool (exiflib) and convert (ImageMagick)
+ *  #   Note: if there is no exif orientation data in the jpeg file,
+ *  #         this simply copies the input file.
+ *  #
+ *  if [[ -z $(command -v exiftool) || -z $(command -v convert) ]]; then
+ *      echo "You need to install dependencies; e.g.:"
+ *      echo "   sudo apt install libimage-exiftool-perl"
+ *      echo "   sudo apt install imagemagick"
+ *      exit 1
+ *  fi
+ *  if [[ $# != 2 ]]; then
+ *      echo "Syntax: orientByExif infile outfile"
+ *      exit 2
+ *  fi
+ *  if [[ ${1: -4} != ".jpg" ]]; then
+ *      echo "File is not a jpeg"
+ *      exit 3
+ *  fi
+ *  if [[ $(exiftool -s3 -n -Orientation "$1") = 1 ]]; then
+ *      echo "Image is already upright"
+ *      exit 0
+ *  fi
+ *  convert "$1" -auto-orient "$2"
+ *  echo "Done"
+ *  exit 0
+ *  ==================================================================
  * </pre>
  */
 
@@ -361,7 +394,13 @@ PIX       *pix1;
  *      (6) One should probably not interpret the direction unless
  *          there are a sufficient number of counts for both orientations,
  *          in which case neither upconf nor leftconf will be 0.0.
- *      (7) Uses rasterop implementation of HMT.
+ *      (7) This algorithm will fail on some images, such as tables,
+ *          where most of the characters are numbers and appear as
+ *          uppercase, but there are some repeated words that give a
+ *          biased signal.  It may be advisable to run a table detector
+ *          first (e.g., pixDecideIfTable()), and not run the orientation
+ *          detector if it is a table.
+ *      (8) Uses rasterop implementation of HMT.
  * </pre>
  */
 l_ok
