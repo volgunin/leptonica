@@ -95,6 +95,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 
@@ -226,7 +230,7 @@ PIX       *pixt, *pixd;
 
     if (scalefactor > 0.5) {   /* see note (5) */
         mag = 2.0 * scalefactor;  /* will be < 2.0 */
-/*        fprintf(stderr, "2x with mag %7.3f\n", mag);  */
+/*        lept_stderr("2x with mag %7.3f\n", mag);  */
         if ((pixt = pixScaleBinary(pixs, mag, mag)) == NULL)
             return (PIX *)ERROR_PTR("pixt not made", procName, NULL);
         pixd = pixScaleToGray2(pixt);
@@ -234,13 +238,13 @@ PIX       *pixt, *pixd;
         return pixd = pixScaleToGray2(pixs);
     } else if (scalefactor > 0.33333) {   /* see note (5) */
         mag = 3.0 * scalefactor;   /* will be < 1.5 */
-/*        fprintf(stderr, "3x with mag %7.3f\n", mag);  */
+/*        lept_stderr("3x with mag %7.3f\n", mag);  */
         if ((pixt = pixScaleBinary(pixs, mag, mag)) == NULL)
             return (PIX *)ERROR_PTR("pixt not made", procName, NULL);
         pixd = pixScaleToGray3(pixt);
     } else if (scalefactor > 0.25) {  /* see note (5) */
         mag = 4.0 * scalefactor;   /* will be < 1.3333 */
-/*        fprintf(stderr, "4x with mag %7.3f\n", mag);  */
+/*        lept_stderr("4x with mag %7.3f\n", mag);  */
         if ((pixt = pixScaleBinary(pixs, mag, mag)) == NULL)
             return (PIX *)ERROR_PTR("pixt not made", procName, NULL);
         pixd = pixScaleToGray4(pixt);
@@ -248,7 +252,7 @@ PIX       *pixt, *pixd;
         return pixd = pixScaleToGray4(pixs);
     } else if (scalefactor > 0.16667) {  /* see note (5) */
         mag = 6.0 * scalefactor;   /* will be < 1.5 */
-/*        fprintf(stderr, "6x with mag %7.3f\n", mag); */
+/*        lept_stderr("6x with mag %7.3f\n", mag); */
         if ((pixt = pixScaleBinary(pixs, mag, mag)) == NULL)
             return (PIX *)ERROR_PTR("pixt not made", procName, NULL);
         pixd = pixScaleToGray6(pixt);
@@ -256,7 +260,7 @@ PIX       *pixt, *pixd;
         return pixd = pixScaleToGray6(pixs);
     } else if (scalefactor > 0.125) {  /* see note (5) */
         mag = 8.0 * scalefactor;   /*  will be < 1.3333  */
-/*        fprintf(stderr, "8x with mag %7.3f\n", mag);  */
+/*        lept_stderr("8x with mag %7.3f\n", mag);  */
         if ((pixt = pixScaleBinary(pixs, mag, mag)) == NULL)
             return (PIX *)ERROR_PTR("pixt not made", procName, NULL);
         pixd = pixScaleToGray8(pixt);
@@ -264,7 +268,7 @@ PIX       *pixt, *pixd;
         return pixd = pixScaleToGray8(pixs);
     } else if (scalefactor > 0.0625) {  /* see note (6) */
         red = 8.0 * scalefactor;   /* will be > 0.5 */
-/*        fprintf(stderr, "8x with red %7.3f\n", red);  */
+/*        lept_stderr("8x with red %7.3f\n", red);  */
         if ((pixt = pixScaleBinary(pixs, red, red)) == NULL)
             return (PIX *)ERROR_PTR("pixt not made", procName, NULL);
         pixd = pixScaleToGray8(pixt);
@@ -272,7 +276,7 @@ PIX       *pixt, *pixd;
         return pixd = pixScaleToGray16(pixs);
     } else {  /* see note (7) */
         red = 16.0 * scalefactor;  /* will be <= 1.0 */
-/*        fprintf(stderr, "16x with red %7.3f\n", red);  */
+/*        lept_stderr("16x with red %7.3f\n", red);  */
         if ((pixt = pixScaleToGray16(pixs)) == NULL)
             return (PIX *)ERROR_PTR("pixt not made", procName, NULL);
         if (red < 0.7)
@@ -407,6 +411,7 @@ PIX       *pixd;
 
     if ((pixd = pixCreate(wd, hd, 8)) == NULL)
         return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
+    pixSetPadBits(pixs, 0);
     pixCopyInputFormat(pixd, pixs);
     pixCopyResolution(pixd, pixs);
     pixScaleResolution(pixd, 0.5, 0.5);
@@ -974,7 +979,7 @@ PIX       *pixd;
         }
         break;
     default:
-        fprintf(stderr, "invalid depth\n");
+        lept_stderr("invalid depth\n");
     }
 
     if (d == 32 && pixGetSpp(pixs) == 4)
@@ -1581,8 +1586,6 @@ l_uint32  *lines, *lined;
         }
 
     }
-
-    return;
 }
 
 
@@ -1743,8 +1746,6 @@ l_uint32  *lines, *lined;
             SET_DATA_BYTE(lined, j + 7, valtab[GET_DATA_BYTE(&sum, 3)]);
         }
     }
-
-    return;
 }
 
 
@@ -1871,8 +1872,6 @@ l_uint32  *lines, *lined;
             SET_DATA_BYTE(lined, j + 1, valtab[GET_DATA_BYTE(&sum, 3)]);
         }
     }
-
-    return;
 }
 
 
@@ -2053,7 +2052,6 @@ l_uint32  *lines, *lined;
             SET_DATA_BYTE(lined, j + 3, valtab[GET_DATA_BYTE(&sum, 3)]);
         }
     }
-    return;
 }
 
 
@@ -2149,8 +2147,6 @@ l_uint32  *lines, *lined;
             SET_DATA_BYTE(lined, j, valtab[sum]);
         }
     }
-
-    return;
 }
 
 
@@ -2266,8 +2262,6 @@ l_uint32  *lines, *lined;
             SET_DATA_BYTE(lined, j, 255 - sum);
         }
     }
-
-    return;
 }
 
 

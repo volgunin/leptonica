@@ -51,6 +51,7 @@
  *           PIX        *pixSetUnderTransparency()
  *           PIX        *pixMakeAlphaFromMask()
  *           l_int32     pixGetColorNearMaskBoundary()
+ *           PIX        *pixDisplaySelectedPixels()  -- for debugging
  *
  *    One and two-image boolean operations on arbitrary depth images
  *           PIX        *pixInvert()
@@ -108,6 +109,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include <math.h>
 #include "allheaders.h"
@@ -119,7 +124,6 @@ static BOXA *findTileRegionsForSearch(BOX *box, l_int32 w, l_int32 h,
 #ifndef  NO_CONSOLE_IO
 #define   EQUAL_SIZE_WARNING      0
 #endif  /* ~NO_CONSOLE_IO */
-
 
 /*-------------------------------------------------------------*
  *                        Masked operations                    *
@@ -1410,7 +1414,7 @@ PIX       *pix1, *pix2, *pix3;
         pixWriteDebug("/tmp/masknear/input.png", pix1, IFF_PNG);
         pixWriteDebug("/tmp/masknear/adjusted.png", pix2, IFF_PNG);
         pixWriteDebug("/tmp/masknear/outerfive.png", pix3, IFF_PNG);
-        fprintf(stderr, "Input box; with adjusted sides; clipped\n");
+        lept_stderr("Input box; with adjusted sides; clipped\n");
         boxPrintStreamInfo(stderr, box);
         boxPrintStreamInfo(stderr, box1);
         boxPrintStreamInfo(stderr, box2);
@@ -1422,6 +1426,58 @@ PIX       *pix1, *pix2, *pix3;
     boxDestroy(&box1);
     boxDestroy(&box2);
     return 0;
+}
+
+
+/*!
+ * \brief   pixDisplaySelectedPixels()
+ *
+ * \param[in]    pixs    [optional] any depth
+ * \param[in]    pixm    1 bpp mask, aligned UL corner with %pixs
+ * \param[in]    sel     [optional] pattern to paint at each pixel in pixm
+ * \param[in]    val     rgb rendering of pattern
+ * \return  pixd, or NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) For every fg pixel in %pixm, this paints the pattern in %sel
+ *          in color %val on a copy of %pixs.
+ *      (2) The implementation is to dilate %pixm by %sel, and then
+ *          paint through the dilated mask onto %pixs.
+ *      (3) If %pixs == NULL, it paints on a white image.
+ *      (4) If %sel == NULL, it paints only the pixels in the input %pixm.
+ *      (5) This visualization would typically be used in debugging.
+ * </pre>
+ */
+PIX *
+pixDisplaySelectedPixels(PIX      *pixs,
+                         PIX      *pixm,
+                         SEL      *sel,
+                         l_uint32  val)
+{
+l_int32  w, h;
+PIX     *pix1, *pix2;
+
+    PROCNAME("pixDisplaySelectedPixels");
+
+    if (!pixm || pixGetDepth(pixm) != 1)
+        return (PIX *)ERROR_PTR("pixm undefined or not 1 bpp", procName, NULL);
+
+    if (pixs) {
+        pix1 = pixConvertTo32(pixs);
+    } else {
+        pixGetDimensions(pixm, &w, &h, NULL);
+        pix1 = pixCreate(w, h, 32);
+        pixSetAll(pix1);
+    }
+
+    if (sel)
+       pix2 = pixDilate(NULL, pixm, sel);
+    else
+       pix2 = pixClone(pixm);
+    pixSetMasked(pix1, pix2, val);
+    pixDestroy(&pix2);
+    return pix1;
 }
 
 
@@ -2612,7 +2668,6 @@ pixAverageInRect(PIX        *pixs,
 l_int32    w, h, d, wpls, wm, hm, dm, wplm, val, count;
 l_int32    i, j, xstart, xend, ystart, yend;
 l_uint32  *datas, *datam, *lines, *linem;
-l_float32  ave;
 l_float64  sum;
 
     PROCNAME("pixAverageInRect");
@@ -3519,9 +3574,9 @@ PIXA      *pixa;
         if (delm < 1.01) {
             if (dels < mindels) {
                 if (debug) {
-                    fprintf(stderr, "i = %d, mean = %7.3f, delm = %7.3f,"
-                            " stdev = %7.3f, dels = %7.3f\n",
-                            i, mean_val, delm, stdev_val, dels);
+                    lept_stderr("i = %d, mean = %7.3f, delm = %7.3f,"
+                                " stdev = %7.3f, dels = %7.3f\n",
+                                i, mean_val, delm, stdev_val, dels);
                 }
                 mindels = dels;
                 bestdelm = delm;

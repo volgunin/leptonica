@@ -97,7 +97,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config_auto.h"
+#include <config_auto.h>
 #endif  /* HAVE_CONFIG_H */
 
 #include <string.h>
@@ -120,8 +120,10 @@
 
 static const l_int32  DefaultResolution = 300;   /* ppi */
 static const l_int32  ManyPagesInTiffFile = 3000;  /* warn if big */
-static const l_uint32  MaxTiffBufferSize = 1 << 24;  /* 16MiB */
 
+    /* Verified that tiflib makes valid g4 files of this size */
+static const l_int32  MaxTiffWidth = 1 << 20;  /* 1M pixels */
+static const l_int32  MaxTiffHeight = 1 << 20;  /* 1M pixels */
 
     /* All functions with TIFF interfaces are static. */
 static PIX      *pixReadFromTiffStream(TIFF *tif);
@@ -201,9 +203,9 @@ static struct tiff_transform tiff_partial_orientation_transforms[] = {
  *                                                                       *
  *  Jürgen made the functions use 64 bit file operations where possible  *
  *  or required, namely for seek and size. On Windows there are specific *
- *  _fseeki64() and _ftelli64() functions, whereas on unix it is         *
- *  common to look for a macro _LARGEFILE_SOURCE being defined and       *
- *  use fseeko() and ftello() in this case.                              *
+ *  _fseeki64() and _ftelli64() functions.  On unix it is common to look *
+ *  for a macro _LARGEFILE64_SOURCE being defined, which makes available *
+ *  the off64_t type, and to use fseeko() and ftello() in this case.     *
  *-----------------------------------------------------------------------*/
 static tsize_t
 lept_read_proc(thandle_t  cookie,
@@ -257,7 +259,7 @@ lept_seek_proc(thandle_t  cookie,
     _fseeki64(fp, pos, SEEK_SET);
     if (pos == _ftelli64(fp))
         return (tsize_t)pos;
-#elif defined(_LARGEFILE_SOURCE)
+#elif defined(_LARGEFILE64_SOURCE)
     off64_t pos = 0;
     if (!cookie || !fp)
         return (tsize_t)-1;
@@ -324,7 +326,7 @@ lept_size_proc(thandle_t  cookie)
     _fseeki64(fp, 0, SEEK_END);
     size = _ftelli64(fp);
     _fseeki64(fp, pos, SEEK_SET);
-#elif defined(_LARGEFILE_SOURCE)
+#elif defined(_LARGEFILE64_SOURCE)
     off64_t pos;
     off64_t size;
     if (!fp)
@@ -478,7 +480,7 @@ l_int32    d, wpl, bpl, comptype, i, j, k, ncolors, rval, gval, bval, aval;
 l_int32    xres, yres;
 l_uint32   w, h, tiffbpl, tiffword, read_oriented;
 l_uint32  *line, *ppixel, *tiffdata, *pixdata;
-PIX       *pix;
+PIX       *pix, *pix1;
 PIXCMAP   *cmap;
 
     PROCNAME("pixReadFromTiffStream");
@@ -509,6 +511,19 @@ PIXCMAP   *cmap;
         return NULL;
     }
 
+        /* Old style jpeg is not supported.  We tried supporting 8 bpp.
+         * TIFFReadScanline() fails on this format, so we used RGBA
+         * reading, which generates a 4 spp image, and pulled out the
+         * red component.  However, there were problems with double-frees
+         * in cleanup.  For RGB, tiffbpl is exactly half the size that
+         * you would expect for the raster data in a scanline, which
+         * is 3 * w.  */
+    TIFFGetFieldDefaulted(tif, TIFFTAG_COMPRESSION, &tiffcomp);
+    if (tiffcomp == COMPRESSION_OJPEG) {
+        L_ERROR("old style jpeg format is not supported\n", procName);
+        return NULL;
+    }
+
         /* Use default fields for bps and spp */
     TIFFGetFieldDefaulted(tif, TIFFTAG_BITSPERSAMPLE, &bps);
     TIFFGetFieldDefaulted(tif, TIFFTAG_SAMPLESPERPIXEL, &spp);
@@ -517,7 +532,7 @@ PIXCMAP   *cmap;
         return NULL;
     }
     if (spp == 2 && bps != 8) {
-        L_WARNING("only handle 8 bps for 2 spp\n", procName);
+        L_WARNING("for 2 spp, only handle 8 bps\n", procName);
         return NULL;
     }
     if (spp == 1)
@@ -531,13 +546,20 @@ PIXCMAP   *cmap;
 
     TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
     TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
+    if (w > MaxTiffWidth) {
+        L_ERROR("width = %d pixels; too large\n", procName, w);
+        return NULL;
+    }
+    if (h > MaxTiffHeight) {
+        L_ERROR("height = %d pixels; too large\n", procName, h);
+        return NULL;
+    }
     tiffbpl = TIFFScanlineSize(tif);
-    if (tiffbpl < (bps * spp * w + 7) / 8)
-        return (PIX *)ERROR_PTR("bad tiff file: tiffbpl is too small",
-                                procName, NULL);
-    if (tiffbpl > MaxTiffBufferSize)
-        return (PIX *)ERROR_PTR("bad tiff file: tiffbpl is too large",
-                                procName, NULL);
+    if (tiffbpl != (bps * spp * w + 7) / 8) {
+        L_ERROR("invalid tiffbpl: tiffbpl = %d, bps = %d, spp = %d, w = %d\n",
+                procName, tiffbpl, bps, spp, w);
+        return NULL;
+    }
 
     if ((pix = pixCreate(w, h, d)) == NULL)
         return (PIX *)ERROR_PTR("pix not made", procName, NULL);
@@ -546,14 +568,7 @@ PIXCMAP   *cmap;
     wpl = pixGetWpl(pix);
     bpl = 4 * wpl;
 
-    TIFFGetFieldDefaulted(tif, TIFFTAG_COMPRESSION, &tiffcomp);
-
-        /* Thanks to Jeff Breidenbach, we now support reading 8 bpp
-         * images encoded in the long-deprecated old jpeg format,
-         * COMPRESSION_OJPEG.  TIFFReadScanline() fails on this format,
-         * so we use RGBA reading, which generates a 4 spp image, and
-         * pull out the red component. */
-    if (spp == 1 && tiffcomp != COMPRESSION_OJPEG) {
+    if (spp == 1) {
         linebuf = (l_uint8 *)LEPT_CALLOC(tiffbpl + 1, sizeof(l_uint8));
         for (i = 0; i < h; i++) {
             if (TIFFReadScanline(tif, linebuf, i, 0) < 0) {
@@ -592,14 +607,14 @@ PIXCMAP   *cmap;
             }
         }
         LEPT_FREE(linebuf);
-    } else {  /* rgb, rgba, or old jpeg */
+    } else {  /* rgb and rgba */
         if ((tiffdata = (l_uint32 *)LEPT_CALLOC((size_t)w * h,
                                                  sizeof(l_uint32))) == NULL) {
             pixDestroy(&pix);
             return (PIX *)ERROR_PTR("calloc fail for tiffdata", procName, NULL);
         }
             /* TIFFReadRGBAImageOriented() converts to 8 bps */
-        if (!TIFFReadRGBAImageOriented(tif, w, h, (uint32 *)tiffdata,
+        if (!TIFFReadRGBAImageOriented(tif, w, h, tiffdata,
                                        ORIENTATION_TOPLEFT, 0)) {
             LEPT_FREE(tiffdata);
             pixDestroy(&pix);
@@ -608,34 +623,22 @@ PIXCMAP   *cmap;
             read_oriented = 1;
         }
 
-        if (spp == 1) {  /* 8 bpp, old jpeg format */
-            pixdata = pixGetData(pix);
-            for (i = 0; i < h; i++) {
-                line = pixdata + i * wpl;
-                for (j = 0; j < w; j++) {
-                    tiffword = tiffdata[i * w + j];
-                    rval = TIFFGetR(tiffword);
-                    SET_DATA_BYTE(line, j, rval);
+        if (spp == 4) pixSetSpp(pix, 4);
+        line = pixGetData(pix);
+        for (i = 0; i < h; i++, line += wpl) {
+            for (j = 0, ppixel = line; j < w; j++) {
+                    /* TIFFGet* are macros */
+                tiffword = tiffdata[i * w + j];
+                rval = TIFFGetR(tiffword);
+                gval = TIFFGetG(tiffword);
+                bval = TIFFGetB(tiffword);
+                if (spp == 3) {
+                    composeRGBPixel(rval, gval, bval, ppixel);
+                } else {  /* spp == 4 */
+                    aval = TIFFGetA(tiffword);
+                    composeRGBAPixel(rval, gval, bval, aval, ppixel);
                 }
-            }
-        } else {  /* rgb or rgba */
-            if (spp == 4) pixSetSpp(pix, 4);
-            line = pixGetData(pix);
-            for (i = 0; i < h; i++, line += wpl) {
-                for (j = 0, ppixel = line; j < w; j++) {
-                        /* TIFFGet* are macros */
-                    tiffword = tiffdata[i * w + j];
-                    rval = TIFFGetR(tiffword);
-                    gval = TIFFGetG(tiffword);
-                    bval = TIFFGetB(tiffword);
-                    if (spp == 3) {
-                        composeRGBPixel(rval, gval, bval, ppixel);
-                    } else {  /* spp == 4 */
-                        aval = TIFFGetA(tiffword);
-                        composeRGBAPixel(rval, gval, bval, aval, ppixel);
-                    }
-                    ppixel++;
-                }
+                ppixel++;
             }
         }
         LEPT_FREE(tiffdata);
@@ -647,7 +650,6 @@ PIXCMAP   *cmap;
     }
 
         /* Find and save the compression type */
-    TIFFGetFieldDefaulted(tif, TIFFTAG_COMPRESSION, &tiffcomp);
     comptype = getTiffCompressedFormat(tiffcomp);
     pixSetInputFormat(pix, comptype);
 
@@ -669,6 +671,13 @@ PIXCMAP   *cmap;
             pixcmapAddColor(cmap, redmap[i] >> 8, greenmap[i] >> 8,
                             bluemap[i] >> 8);
         pixSetColormap(pix, cmap);
+
+            /* Remove the colormap for 1 bpp. */
+        if (bps == 1) {
+            pix1 = pixRemoveColormap(pix, REMOVE_CMAP_BASED_ON_SRC);
+            pixDestroy(&pix);
+            pix = pix1;
+        }
     } else {   /* No colormap: check photometry and invert if necessary */
         if (!TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometry)) {
                 /* Guess default photometry setting.  Assume min_is_white
@@ -707,7 +716,6 @@ PIXCMAP   *cmap;
     if (text) pixSetText(pix, text);
     return pix;
 }
-
 
 
 /*--------------------------------------------------------------*
@@ -993,9 +1001,13 @@ char      *text;
     if ((text = pixGetText(pix)) != NULL)
         TIFFSetField(tif, TIFFTAG_IMAGEDESCRIPTION, text);
 
-    if (d == 1)
+    if (d == 1 && !pixGetColormap(pix)) {
+            /* If d == 1, preserve the colormap.  Note that when
+             * d == 1 pix with colormaps are read, the colormaps
+             * are removed.  The only pix in leptonica that have
+             * colormaps are made programmatically. */
         TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISWHITE);
-    else if ((d == 32 && spp == 3) || d == 24) {
+    } else if ((d == 32 && spp == 3) || d == 24) {
         TIFFSetField(tif, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
         TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, (l_uint16)3);
         TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE,
@@ -1079,7 +1091,7 @@ char      *text;
     wpl = pixGetWpl(pix);
     bpl = 4 * wpl;
     if (tiffbpl > bpl)
-        fprintf(stderr, "Big trouble: tiffbpl = %d, bpl = %d\n", tiffbpl, bpl);
+        lept_stderr("Big trouble: tiffbpl = %d, bpl = %d\n", tiffbpl, bpl);
     if ((linebuf = (l_uint8 *)LEPT_CALLOC(1, bpl)) == NULL)
         return ERROR_INT("calloc fail for linebuf", procName, 1);
 
@@ -1204,44 +1216,45 @@ l_uint32   uval, uval2;
         numaGetIValue(natags, i, &tagval);
         sval = sarrayGetString(savals, i, L_NOCOPY);
         type = sarrayGetString(satypes, i, L_NOCOPY);
-        if (!strcmp(type, "char*")) {
+        if (!strcmp(type, "char*") || !strcmp(type, "const char*")) {
             TIFFSetField(tif, tagval, sval);
         } else if (!strcmp(type, "l_uint16")) {
             if (sscanf(sval, "%u", &uval) == 1) {
                 TIFFSetField(tif, tagval, (l_uint16)uval);
             } else {
-                fprintf(stderr, "val %s not of type %s\n", sval, type);
+                lept_stderr("val %s not of type %s\n", sval, type);
                 return ERROR_INT("custom tag(s) not written", procName, 1);
             }
         } else if (!strcmp(type, "l_uint32")) {
             if (sscanf(sval, "%u", &uval) == 1) {
                 TIFFSetField(tif, tagval, uval);
             } else {
-                fprintf(stderr, "val %s not of type %s\n", sval, type);
+                lept_stderr("val %s not of type %s\n", sval, type);
                 return ERROR_INT("custom tag(s) not written", procName, 1);
             }
         } else if (!strcmp(type, "l_int32")) {
             if (sscanf(sval, "%d", &val) == 1) {
                 TIFFSetField(tif, tagval, val);
             } else {
-                fprintf(stderr, "val %s not of type %s\n", sval, type);
+                lept_stderr("val %s not of type %s\n", sval, type);
                 return ERROR_INT("custom tag(s) not written", procName, 1);
             }
         } else if (!strcmp(type, "l_float64")) {
             if (sscanf(sval, "%lf", &dval) == 1) {
                 TIFFSetField(tif, tagval, dval);
             } else {
-                fprintf(stderr, "val %s not of type %s\n", sval, type);
+                lept_stderr("val %s not of type %s\n", sval, type);
                 return ERROR_INT("custom tag(s) not written", procName, 1);
             }
         } else if (!strcmp(type, "l_uint16-l_uint16")) {
             if (sscanf(sval, "%u-%u", &uval, &uval2) == 2) {
                 TIFFSetField(tif, tagval, (l_uint16)uval, (l_uint16)uval2);
             } else {
-                fprintf(stderr, "val %s not of type %s\n", sval, type);
+                lept_stderr("val %s not of type %s\n", sval, type);
                 return ERROR_INT("custom tag(s) not written", procName, 1);
             }
         } else {
+            lept_stderr("unknown type %s\n",type);
             return ERROR_INT("unknown type; tag(s) not written", procName, 1);
         }
     }
@@ -1805,11 +1818,7 @@ TIFF    *tif;
         return ERROR_INT("no results requested", procName, 1);
 
     findFileFormatStream(fp, &format);
-    if (format != IFF_TIFF &&
-        format != IFF_TIFF_G3 && format != IFF_TIFF_G4 &&
-        format != IFF_TIFF_RLE && format != IFF_TIFF_PACKBITS &&
-        format != IFF_TIFF_LZW && format != IFF_TIFF_ZIP &&
-        format != IFF_TIFF_JPEG)
+    if (!L_FORMAT_IS_TIFF(format))
         return ERROR_INT("file not tiff format", procName, 1);
 
     if ((tif = fopenTiff(fp, "r")) == NULL)
@@ -1934,7 +1943,7 @@ l_uint32   w, h;
     TIFFGetFieldDefaulted(tif, TIFFTAG_SAMPLESPERPIXEL, &spp);
     if (w < 1 || h < 1)
         return ERROR_INT("tif w and h not both > 0", procName, 1);
-    if (bps != 1 && bps != 2 && bps != 4 && bps != 8 && bps > 16)
+    if (bps != 1 && bps != 2 && bps != 4 && bps != 8 && bps != 16)
         return ERROR_INT("bps not in set {1,2,4,8,16}", procName, 1);
     if (spp != 1 && spp != 2 && spp != 3 && spp != 4)
         return ERROR_INT("spp not in set {1,2,3,4}", procName, 1);
@@ -2140,7 +2149,7 @@ TIFF     *tif;
         diroff = (inarray[7] << 24) | (inarray[6] << 16) |
                  (inarray[5] << 8) | inarray[4];
     }
-/*    fprintf(stderr, " diroff = %d, %x\n", diroff, diroff); */
+/*    lept_stderr(" diroff = %d, %x\n", diroff, diroff); */
 
         /* Extract the ccittg4 encoded data from the tiff file.
          * We skip the 8 byte header and take nbytes of data,
@@ -2349,7 +2358,7 @@ size_t        amount;
         /* Fuzzed files can create this condition! */
     if (mstream->offset + amount < amount ||  /* overflow */
         mstream->offset + amount > mstream->hw) {
-        fprintf(stderr, "Bad file: amount too big: %zu\n", amount);
+        lept_stderr("Bad file: amount too big: %zu\n", amount);
         return 0;
     }
 
@@ -2397,18 +2406,18 @@ L_MEMSTREAM  *mstream;
     mstream = (L_MEMSTREAM *)handle;
     switch (whence) {
         case SEEK_SET:
-/*            fprintf(stderr, "seek_set: offset = %d\n", offset); */
+/*            lept_stderr("seek_set: offset = %d\n", offset); */
             if((size_t)offset != offset) {  /* size_t overflow on uint32 */
                 return (toff_t)ERROR_INT("too large offset value", procName, 1);
             }
             mstream->offset = offset;
             break;
         case SEEK_CUR:
-/*            fprintf(stderr, "seek_cur: offset = %d\n", offset); */
+/*            lept_stderr("seek_cur: offset = %d\n", offset); */
             mstream->offset += offset;
             break;
         case SEEK_END:
-/*            fprintf(stderr, "seek end: hw = %d, offset = %d\n",
+/*            lept_stderr("seek end: hw = %d, offset = %d\n",
                     mstream->hw, offset); */
             mstream->offset = mstream->hw - offset;  /* offset >= 0 */
             break;

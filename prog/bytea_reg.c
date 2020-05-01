@@ -30,6 +30,10 @@
  *  This tests the byte array utility.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 
@@ -45,6 +49,11 @@ L_DNA        *da;
 SARRAY       *sa;
 L_BYTEA      *lba1, *lba2, *lba3, *lba4;
 L_REGPARAMS  *rp;
+
+#if !defined(HAVE_LIBJPEG)
+    L_ERROR("This test requires libjpeg to run.\n", "bytea_reg");
+    exit(77);
+#endif
 
     if (regTestSetup(argc, argv, &rp))
         return 1;

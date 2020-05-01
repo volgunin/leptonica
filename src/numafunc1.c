@@ -100,6 +100,8 @@
  *          l_int32      numaIsSorted()
  *          l_int32      numaSortPair()
  *          NUMA        *numaInvertMap()
+ *          l_int32      numaAddSorted()
+ *          l_int32      numaFindSortedLoc()
  *
  *      Random permutation
  *          NUMA        *numaPseudorandomSequence()
@@ -137,9 +139,12 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include "allheaders.h"
-
 
 /*----------------------------------------------------------------------*
  *                Arithmetic and logical ops on Numas                   *
@@ -212,7 +217,7 @@ l_float32  val1, val2;
             numaSetValue(nad, i, val1 / val2);
             break;
         default:
-            fprintf(stderr, " Unknown arith op: %d\n", op);
+            lept_stderr(" Unknown arith op: %d\n", op);
             return nad;
         }
     }
@@ -290,7 +295,7 @@ l_int32  i, n, val1, val2, val;
             numaSetValue(nad, i, val);
             break;
         default:
-            fprintf(stderr, " Unknown logical op: %d\n", op);
+            lept_stderr(" Unknown logical op: %d\n", op);
             return nad;
         }
     }
@@ -2374,7 +2379,9 @@ numaSortGeneral(NUMA    *na,
                 l_int32  sortorder,
                 l_int32  sorttype)
 {
-NUMA  *naindex;
+l_int32    isize;
+l_float32  size;
+NUMA      *naindex = NULL;
 
     PROCNAME("numaSortGeneral");
 
@@ -2390,10 +2397,19 @@ NUMA  *naindex;
     if (pnaindex) *pnaindex = NULL;
     if (pnainvert) *pnainvert = NULL;
 
+    if (sorttype == L_BIN_SORT) {
+        numaGetMax(na, &size, NULL);
+        isize = (l_int32)size;
+        if (isize > MaxInitPtraSize - 1) {
+            L_WARNING("array too large; using shell sort\n", procName);
+            sorttype = L_SHELL_SORT;
+        } else {
+            naindex = numaGetBinSortIndex(na, sortorder);
+        }
+    }
+
     if (sorttype == L_SHELL_SORT)
         naindex = numaGetSortIndex(na, sortorder);
-    else  /* sorttype == L_BIN_SORT */
-        naindex = numaGetBinSortIndex(na, sortorder);
 
     if (pnasort)
         *pnasort = numaSortByIndex(na, naindex);
@@ -2410,7 +2426,7 @@ NUMA  *naindex;
 /*!
  * \brief   numaSortAutoSelect()
  *
- * \param[in]    nas         input numa
+ * \param[in]    nas
  * \param[in]    sortorder   L_SORT_INCREASING or L_SORT_DECREASING
  * \return  naout output sorted numa, or NULL on error
  *
@@ -2434,12 +2450,13 @@ l_int32  type;
         return (NUMA *)ERROR_PTR("invalid sort order", procName, NULL);
 
     type = numaChooseSortType(nas);
-    if (type == L_SHELL_SORT)
-        return numaSort(NULL, nas, sortorder);
-    else if (type == L_BIN_SORT)
-        return numaBinSort(nas, sortorder);
-    else
+    if (type != L_SHELL_SORT && type != L_BIN_SORT)
         return (NUMA *)ERROR_PTR("invalid sort type", procName, NULL);
+
+    if (type == L_BIN_SORT)
+        return numaBinSort(nas, sortorder);
+    else  /* shell sort */
+        return numaSort(NULL, nas, sortorder);
 }
 
 
@@ -2470,12 +2487,13 @@ l_int32  type;
         return (NUMA *)ERROR_PTR("invalid sort order", procName, NULL);
 
     type = numaChooseSortType(nas);
-    if (type == L_SHELL_SORT)
-        return numaGetSortIndex(nas, sortorder);
-    else if (type == L_BIN_SORT)
-        return numaGetBinSortIndex(nas, sortorder);
-    else
+    if (type != L_SHELL_SORT && type != L_BIN_SORT)
         return (NUMA *)ERROR_PTR("invalid sort type", procName, NULL);
+
+    if (type == L_BIN_SORT)
+        return numaGetBinSortIndex(nas, sortorder);
+    else  /* shell sort */
+        return numaGetSortIndex(nas, sortorder);
 }
 
 
@@ -2503,20 +2521,25 @@ l_float32  minval, maxval;
     if (!nas)
         return ERROR_INT("nas not defined", procName, UNDEF);
 
+        /* If small histogram or negative values; use shell sort */
     numaGetMin(nas, &minval, NULL);
     n = numaGetCount(nas);
-
-        /* Very small histogram; use shell sort */
     if (minval < 0.0 || n < 200) {
         L_INFO("Shell sort chosen\n", procName);
         return L_SHELL_SORT;
     }
 
-        /* Need to compare nlog(n) with maxval.  The factor of 0.003
-         * was determined by comparing times for different histogram
-         * sizes and maxval.  It is very small because binsort is fast
-         * and shell sort gets slow for large n. */
+        /* If large maxval, use shell sort */
     numaGetMax(nas, &maxval, NULL);
+    if (maxval > MaxInitPtraSize - 1) {
+        L_INFO("Shell sort chosen\n", procName);
+        return L_SHELL_SORT;
+    }
+
+        /* Otherwise, need to compare nlog(n) with maxval.
+         * The factor of 0.003 was determined by comparing times for
+         * different histogram sizes and maxval.  It is very small
+         * because binsort is fast and shell sort gets slow for large n. */
     if (n * log((l_float32)n) < 0.003 * maxval) {
         type = L_SHELL_SORT;
         L_INFO("Shell sort chosen\n", procName);
@@ -2591,8 +2614,8 @@ l_float32  *array;
 /*!
  * \brief   numaBinSort()
  *
- * \param[in]    nas         of non-negative integers with a max that is
- *                           typically less than 50,000
+ * \param[in]    nas         of non-negative integers with a max that can
+ *                           not exceed (MaxInitPtraSize - 1)
  * \param[in]    sortorder   L_SORT_INCREASING or L_SORT_DECREASING
  * \return  na   sorted, or NULL on error
  *
@@ -2603,6 +2626,8 @@ l_float32  *array;
  *          arrays containing very large integer values.  For such
  *          arrays, use a standard general sort function like
  *          numaSort().
+ *      (2) You can use numaSortAutoSelect() to decide which sorting
+ *          method to use.
  * </pre>
  */
 NUMA *
@@ -2618,7 +2643,8 @@ NUMA  *nat, *nad;
     if (sortorder != L_SORT_INCREASING && sortorder != L_SORT_DECREASING)
         return (NUMA *)ERROR_PTR("invalid sort order", procName, NULL);
 
-    nat = numaGetBinSortIndex(nas, sortorder);
+    if ((nat = numaGetBinSortIndex(nas, sortorder)) == NULL)
+        return (NUMA *)ERROR_PTR("bin sort failed", procName, NULL);
     nad = numaSortByIndex(nas, nat);
     numaDestroy(&nat);
     return nad;
@@ -2693,8 +2719,8 @@ NUMA       *naisort;
 /*!
  * \brief   numaGetBinSortIndex()
  *
- * \param[in]    nas         of non-negative integers with a max that is
- *                           typically less than 1,000,000
+ * \param[in]    nas         of non-negative integers with a max that can
+ *                           not exceed (MaxInitPtraSize - 1)
  * \param[in]    sortorder   L_SORT_INCREASING or L_SORT_DECREASING
  * \return  na  sorted, or NULL on error
  *
@@ -2707,6 +2733,8 @@ NUMA       *naisort;
  *          arrays containing very large integer values.  For such
  *          arrays, use a standard general sort function like
  *          numaGetSortIndex().
+ *      (3) You can use numaSortIndexAutoSelect() to decide which
+ *          sorting method to use.
  * </pre>
  */
 NUMA *
@@ -2714,7 +2742,7 @@ numaGetBinSortIndex(NUMA    *nas,
                     l_int32  sortorder)
 {
 l_int32    i, n, isize, ival, imax;
-l_float32  size;
+l_float32  minsize, size;
 NUMA      *na, *nai, *nad;
 L_PTRA    *paindex;
 
@@ -2724,6 +2752,16 @@ L_PTRA    *paindex;
         return (NUMA *)ERROR_PTR("nas not defined", procName, NULL);
     if (sortorder != L_SORT_INCREASING && sortorder != L_SORT_DECREASING)
         return (NUMA *)ERROR_PTR("invalid sort order", procName, NULL);
+    numaGetMin(nas, &minsize, NULL);
+    if (minsize < 0)
+        return (NUMA *)ERROR_PTR("nas has negative numbers", procName, NULL);
+    numaGetMax(nas, &size, NULL);
+    isize = (l_int32)size;
+    if (isize > MaxInitPtraSize - 1) {
+        L_ERROR("array too large: %d elements > max size = %d\n",
+                procName, isize, MaxInitPtraSize - 1);
+        return NULL;
+    }
 
         /* Set up a ptra holding numa at indices for which there
          * are values in nas.  Suppose nas has the value 230 at index
@@ -2733,10 +2771,6 @@ L_PTRA    *paindex;
          * in the ptra).  When finished, the ptra can be scanned for numa,
          * and the original indices in the nas can be read out.  In this
          * way, the ptra effectively sorts the input numbers in the nas. */
-    numaGetMax(nas, &size, NULL);
-    isize = (l_int32)size;
-    if (isize > 1000000)
-        L_WARNING("large array: %d elements\n", procName, isize);
     paindex = ptraCreate(isize + 1);
     n = numaGetCount(nas);
     for (i = 0; i < n; i++) {
@@ -2960,6 +2994,130 @@ NUMA     *nad;
     }
 
     return nad;
+}
+
+/*!
+ * \brief   numaAddSorted()
+ *
+ * \param[in]    na     sorted input
+ * \param[in]    val    value to be inserted in sorted order
+ * \return  0 if OK, 1 on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) The input %na is sorted.  This function determines the
+ *          sort order of %na and inserts %val into the array.
+ * </pre>
+ */
+l_ok
+numaAddSorted(NUMA      *na,
+              l_float32  val)
+{
+l_int32  index;
+
+    PROCNAME("numaAddSorted");
+
+    if (!na)
+        return ERROR_INT("na not defined", procName, 1);
+
+    if (numaFindSortedLoc(na, val, &index) == 1)
+        return ERROR_INT("insert failure", procName, 1);
+    numaInsertNumber(na, index, val);
+    return 0;
+}
+
+
+/*!
+ * \brief   numaFindSortedLoc()
+ *
+ * \param[in]    na     sorted input
+ * \param[in]    val    value to be inserted in sorted order
+ * \param[out]  *ploc   index location to insert @val
+ * \return  0 if OK, 1 on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) The input %na is sorted.  This determines the sort order of @na,
+ *          either increasing or decreasing, and does a binary search for the
+ *          location to insert %val into the array.  The search is O(log n).
+ *      (2) The index returned is the location to insert into the array.
+ *          The value at the index, and all values to the right, are
+ *          moved to the right (increasing their index location by 1).
+ *      (3) If n is the size of %na, *ploc can be anything in [0 ... n].
+ *          if *ploc == 0, the value is inserted at the beginning of the
+ *          array; if *ploc == n, it is inserted at the end.
+ *      (4) If the size of %na is 1, insert with an increasing sort.
+ * </pre>
+ */
+l_ok
+numaFindSortedLoc(NUMA      *na,
+                  l_float32  val,
+                  l_int32   *pindex)
+{
+l_int32    n, increasing, lindex, rindex, midindex;
+l_float32  val0, valn, valmid;
+
+    PROCNAME("numaFindSortedLoc");
+
+    if (!pindex)
+        return ERROR_INT("&index not defined", procName, 1);
+    *pindex = 0;
+    if (!na)
+        return ERROR_INT("na not defined", procName, 1);
+
+    n = numaGetCount(na);
+    if (n == 0) return 0;
+    numaGetFValue(na, 0, &val0);
+    if (n == 1) {  /* use increasing sort order */
+        if (val >= val0)
+            *pindex = 1;
+        return 0;
+    }
+
+        /* -----------------  n >= 2 ----------------- */
+    numaGetFValue(na, n - 1, &valn);
+    increasing = (valn >= val0) ? 1 : 0;  /* sort order */
+
+        /* Check if outside bounds of existing array */
+    if (increasing) {
+        if (val < val0) {
+            *pindex = 0;
+            return 0;
+        } else if (val > valn) {
+            *pindex = n;
+            return 0;
+        }
+    } else {  /* decreasing */
+        if (val > val0) {
+            *pindex = 0;
+            return 0;
+        } else if (val < valn) {
+            *pindex = n;
+            return 0;
+        }
+    }
+
+        /* Within bounds of existing array; search */
+    lindex = 0;
+    rindex = n - 1;
+    while (1) {
+        midindex = (lindex + rindex) / 2;
+        if (midindex == lindex || midindex == rindex) break;
+        numaGetFValue(na, midindex, &valmid);
+        if (increasing) {
+            if (val > valmid)
+                lindex = midindex;
+            else
+                rindex = midindex;
+        } else {  /* decreasing */
+            if (val > valmid)
+                rindex = midindex;
+            else
+                lindex = midindex;
+        }
+    }
+    *pindex = rindex;
+    return 0;
 }
 
 

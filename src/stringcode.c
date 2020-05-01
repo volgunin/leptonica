@@ -71,7 +71,7 @@
  *       static void      strcodeDestroy()    (called as part of finalize)
  *       void             strcodeCreateFromFile()
  *       l_int32          strcodeGenerate()
- *       void             strcodeFinalize()
+ *       l_int32          strcodeFinalize()
  *       l_int32          l_getStructStrFromFile()   (useful externally)
  *
  *   Static helpers
@@ -83,6 +83,10 @@
  *       static char     *l_genDescrString()
  * </pre>
  */
+
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
 
 #include <string.h>
 #include "allheaders.h"
@@ -133,7 +137,6 @@ static l_int32 l_getIndexFromFile(const char *file, l_int32 *pindex);
 static char *l_genDataString(const char *filein, l_int32 ifunc);
 static char *l_genCaseString(l_int32 ifunc, l_int32 itype);
 static char *l_genDescrString(const char *filein, l_int32 ifunc, l_int32 itype);
-
 
 /*---------------------------------------------------------------------*/
 /*                         Stringcode functions                        */
@@ -198,7 +201,6 @@ L_STRCODE  *strcode;
     sarrayDestroy(&strcode->descr);
     LEPT_FREE(strcode);
     *pstrcode = NULL;
-    return;
 }
 
 
@@ -331,7 +333,7 @@ l_int32  itype;
  * \param[in,out]  pstrcode   destroys and sets to null after .c and .h files
  *                            have been generated
  * \param[in]      outdir     [optional] if NULL, make files in /tmp/lept/auto
- * \return  void
+ * \return     0 if OK; 1 on error
  */
 l_int32
 strcodeFinalize(L_STRCODE  **pstrcode,

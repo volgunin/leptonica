@@ -128,7 +128,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config_auto.h"
+#include <config_auto.h>
 #endif  /* HAVE_CONFIG_H */
 
 #include <string.h>
@@ -471,8 +471,8 @@ jmp_buf                        jmpbuf;  /* must be local to the function */
     }
 
     if (cinfo.output_components != spp)
-        fprintf(stderr, "output spp = %d, spp = %d\n",
-                cinfo.output_components, spp);
+        lept_stderr("output spp = %d, spp = %d\n",
+                    cinfo.output_components, spp);
 
     jpeg_finish_decompress(&cinfo);
     jpeg_destroy_decompress(&cinfo);
@@ -1222,7 +1222,6 @@ jpeg_error_catch_all_1(j_common_ptr cinfo)
     (*cinfo->err->output_message) (cinfo);
     jpeg_destroy(cinfo);
     longjmp(*pjmpbuf, 1);
-    return;
 }
 
 /*!
@@ -1242,7 +1241,6 @@ struct callback_data  *pcb_data;
     (*cinfo->err->output_message) (cinfo);
     jpeg_destroy(cinfo);
     longjmp(pcb_data->jmpbuf, 1);
-    return;
 }
 
 /* This function was borrowed from libjpeg */

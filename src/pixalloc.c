@@ -41,6 +41,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 /*-------------------------------------------------------------------------*
@@ -262,7 +266,7 @@ L_PTRAA          *paa;
  * </pre>
  */
 void
-pmsDestroy()
+pmsDestroy(void)
 {
 L_PIX_MEM_STORE  *pms;
 
@@ -286,7 +290,6 @@ L_PIX_MEM_STORE  *pms;
     LEPT_FREE(pms->firstptr);
     LEPT_FREE(pms);
     CustomPMS = NULL;
-    return;
 }
 
 
@@ -376,8 +379,6 @@ L_PTRA           *pa;
         if (pms->logfile)
             pms->meminuse[level]--;
     }
-
-    return;
 }
 
 
@@ -505,7 +506,7 @@ L_PIX_MEM_STORE  *pms;
  * \brief   pmsLogInfo()
  */
 void
-pmsLogInfo()
+pmsLogInfo(void)
 {
 l_int32           i;
 L_PIX_MEM_STORE  *pms;
@@ -513,20 +514,18 @@ L_PIX_MEM_STORE  *pms;
     if ((pms = CustomPMS) == NULL)
         return;
 
-    fprintf(stderr, "Total number of pix used at each level\n");
+    lept_stderr("Total number of pix used at each level\n");
     for (i = 0; i < pms->nlevels; i++)
-         fprintf(stderr, " Level %d (%zu bytes): %d\n", i,
-                 pms->sizes[i], pms->memused[i]);
+         lept_stderr(" Level %d (%zu bytes): %d\n", i,
+                     pms->sizes[i], pms->memused[i]);
 
-    fprintf(stderr, "Max number of pix in use at any time in each level\n");
+    lept_stderr("Max number of pix in use at any time in each level\n");
     for (i = 0; i < pms->nlevels; i++)
-         fprintf(stderr, " Level %d (%zu bytes): %d\n", i,
-                 pms->sizes[i], pms->memmax[i]);
+         lept_stderr(" Level %d (%zu bytes): %d\n", i,
+                     pms->sizes[i], pms->memmax[i]);
 
-    fprintf(stderr, "Number of pix alloc'd because none were available\n");
+    lept_stderr("Number of pix alloc'd because none were available\n");
     for (i = 0; i < pms->nlevels; i++)
-         fprintf(stderr, " Level %d (%zu bytes): %d\n", i,
-                 pms->sizes[i], pms->memempty[i]);
-
-    return;
+         lept_stderr(" Level %d (%zu bytes): %d\n", i,
+                     pms->sizes[i], pms->memempty[i]);
 }

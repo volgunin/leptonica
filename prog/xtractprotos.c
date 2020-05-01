@@ -84,10 +84,14 @@
  *   Cygwin needs to prevent it from appending ".exe" to the filename.)
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 
-static const l_int32  L_BUFSIZE = 512;  /* hardcoded below in sscanf() */
+#define L_BUFSIZE 512  /* hardcoded below in sscanf() */
 static const char *version = "1.5";
 
 

@@ -97,6 +97,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 
@@ -183,8 +187,6 @@ L_BBUFFER  *bb;
         LEPT_FREE(bb->array);
     LEPT_FREE(bb);
     *pbb = NULL;
-
-    return;
 }
 
 

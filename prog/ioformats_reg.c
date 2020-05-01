@@ -57,12 +57,11 @@
  *        libwebp, libopenjp2, libgif
  */
 
-#include "allheaders.h"
-
-    /* Needed for checking libraries */
 #ifdef HAVE_CONFIG_H
 #include <config_auto.h>
 #endif /* HAVE_CONFIG_H */
+
+#include "allheaders.h"
 
 #define   BMP_FILE             "test1.bmp"
 #define   FILE_1BPP            "feyn.tif"
@@ -105,6 +104,7 @@ size_t        size, nbytes;
 PIX          *pix1, *pix2, *pix3, *pix4, *pix8, *pix16, *pix32;
 PIX          *pix, *pixt, *pixd;
 PIXA         *pixa;
+PIXCMAP      *cmap;
 L_REGPARAMS  *rp;
 
 #if  !HAVE_LIBJPEG
@@ -259,6 +259,7 @@ L_REGPARAMS  *rp;
             success = FALSE;
         pixDestroy(&pix);
     }
+
         /* Test writing and reading tiff colormaps */
     pix1 = pixRead(FILE_8BPP_2);
     pixWrite("/tmp/lept/regout/weas8.tif", pix1, IFF_TIFF);
@@ -279,7 +280,35 @@ L_REGPARAMS  *rp;
     pixDestroy(&pix1);
     pixDestroy(&pix2);
     pixDestroy(&pix3);
-    
+
+        /* Test writing and reading 1 bpp tiff with colormap */
+    pix1 = pixRead("feyn-fract2.tif");
+    cmap = pixcmapCreate(1);
+    pixcmapAddColor(cmap, 0, 0, 0);  /* inverted b/w */
+    pixcmapAddColor(cmap, 255, 255, 255);
+    pixSetColormap(pix1, cmap);
+    pixWrite("/tmp/lept/regout/fract1.tif", pix1, IFF_TIFF_ZIP);
+    pix2 = pixRead("/tmp/lept/regout/fract1.tif");
+    pixEqual(pix1, pix2, &same);
+    if (!same) {
+        fprintf(stderr, "Tiff read/write failed for 1 bpp cmap\n");
+        success = FALSE;
+    }
+    cmap = pixcmapCreate(1);
+    pixcmapAddColor(cmap, 255, 255, 255);
+    pixcmapAddColor(cmap, 100, 200, 50);  /* with color */
+    pixSetColormap(pix1, cmap);  /* replace the colormap */
+    pixWrite("/tmp/lept/regout/fract2.tif", pix1, IFF_TIFF_ZIP);
+    pix3 = pixRead("/tmp/lept/regout/fract2.tif");
+    pixEqual(pix1, pix3, &same);
+    if (!same) {
+        fprintf(stderr, "Tiff read/write failed for 1 bpp color cmap\n");
+        success = FALSE;
+    }
+    pixDestroy(&pix1);
+    pixDestroy(&pix2);
+    pixDestroy(&pix3);
+
         /* Test writing and reading tiff with alpha */
     pix1 = pixRead(FILE_GRAY_ALPHA_TIF);  /* converts to RGBA */
     pixWrite("/tmp/lept/regout/graya.tif", pix1, IFF_TIFF);
@@ -307,7 +336,7 @@ L_REGPARAMS  *rp;
     }
     pixDestroy(&pix1);
     pixDestroy(&pix2);
-    
+
         /* Test reading 16 bit sampled rgb tiff */
     pix1 = pixRead(FILE_RGB16_TIF);  /* converts 16 to 8 bits RGB */
     pixWrite("/tmp/lept/regout/rgb16.tif", pix1, IFF_TIFF_ZIP);
@@ -793,10 +822,7 @@ size_t      size1, size2;
         return 0;
 #endif  /* !HAVE_LIBPNG */
 #if !HAVE_LIBTIFF
-    if (true_format == IFF_TIFF_G3 || true_format == IFF_TIFF_G4 ||
-        true_format == IFF_TIFF_ZIP || true_format == IFF_TIFF_LZW ||
-        true_format == IFF_TIFF_PACKBITS || true_format == IFF_TIFF_RLE ||
-        true_format == IFF_TIFF_JPEG || true_format == IFF_TIFF)
+    if (L_FORMAT_IS_TIFF(true_format))
         return 0;
 #endif  /* !HAVE_LIBTIFF */
 
@@ -808,10 +834,7 @@ size_t      size1, size2;
     if (ret1)
         fprintf(stderr, "Error: couldn't read header data: %s\n", filename);
     else {
-        if (format1 == IFF_TIFF || format1 == IFF_TIFF_PACKBITS ||
-            format1 == IFF_TIFF_RLE || format1 == IFF_TIFF_G3 ||
-            format1 == IFF_TIFF_G4 || format1 == IFF_TIFF_LZW ||
-            format1 == IFF_TIFF_ZIP || format1 == IFF_TIFF_JPEG) {
+        if (L_FORMAT_IS_TIFF(format1)) {
             tiff_compression_name = get_tiff_compression_name(format1);
             fprintf(stderr, "Format data for image %s with format %s:\n"
                 "  nbytes = %lu, size (w, h, d) = (%d, %d, %d)\n"

@@ -21,6 +21,7 @@
 *.log
 *.o
 *.pc
+*.lnk
 .deps
 .libs
 makefile

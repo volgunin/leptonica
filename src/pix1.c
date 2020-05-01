@@ -50,6 +50,7 @@
  *          PIX          *pixCreateNoInit()
  *          PIX          *pixCreateTemplate()
  *          PIX          *pixCreateTemplateNoInit()
+ *          PIX          *pixCreateWithCmap()
  *          PIX          *pixCreateHeader()
  *          PIX          *pixClone()
  *
@@ -189,6 +190,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 
@@ -244,12 +249,10 @@ pix_free(void  *ptr)
 {
 #ifndef _MSC_VER
     (*pix_mem_manager.deallocator)(ptr);
-    return;
 #else  /* _MSC_VER */
     /* Under MSVC++, pix_mem_manager is initialized after a call
      * to pix_malloc.  Just ignore the custom allocator feature. */
     free(ptr);
-    return;
 #endif  /* _MSC_VER */
 }
 
@@ -284,7 +287,6 @@ setPixMemoryManager(alloc_fn   allocator,
 {
     if (allocator) pix_mem_manager.allocator = allocator;
     if (deallocator) pix_mem_manager.deallocator = deallocator;
-    return;
 }
 
 
@@ -417,6 +419,49 @@ PIX     *pixd;
 
 
 /*!
+ * \brief   pixCreateWithCmap()
+ *
+ * \param[in]    width
+ * \param[in]    height
+ * \param[in]    depth        2, 4 or 8 bpp
+ * \param[in]    initcolor    L_SET_BLACK, L_SET_WHITE
+ * \return  pixd   with the initialization color assigned to all pixels,
+ *                 or NULL on error.
+ *
+ * <pre>
+ * Notes:
+ *      (1) Creates a pix with a cmap, initialized to value 0.
+ *      (2) Initializes the pix black or white by adding that color
+ *          to the cmap at index 0.
+ * </pre>
+ */
+PIX *
+pixCreateWithCmap(l_int32  width,
+                 l_int32  height,
+                 l_int32  depth,
+                 l_int32  initcolor)
+{
+PIX       *pix;
+PIXCMAP   *cmap;
+
+    PROCNAME("pixCreateWithCmap");
+
+    if (depth != 2 && depth != 4 && depth != 8)
+        return (PIX *)ERROR_PTR("depth not 2, 4 or 8 bpp", procName, NULL);
+
+    if ((pix = pixCreate(width, height, depth)) == NULL)
+        return (PIX *)ERROR_PTR("pix not made", procName, NULL);
+    cmap = pixcmapCreate(depth);
+    pixSetColormap(pix, cmap);
+    if (initcolor == L_SET_BLACK)
+         pixcmapAddColor(cmap, 0, 0, 0);
+    else  /* L_SET_WHITE */
+         pixcmapAddColor(cmap, 255, 255, 255);
+    return pix;
+}
+
+
+/*!
  * \brief   pixCreateHeader()
  *
  * \param[in]    width, height, depth
@@ -458,10 +503,10 @@ PIX      *pixd;
 
         /* Avoid overflow in malloc, malicious or otherwise */
     wpl64 = ((l_uint64)width * (l_uint64)depth + 31) / 32;
-    if (wpl64 > ((1LL << 29) - 1)) {
+    if (wpl64 > ((1LL << 24) - 1)) {
         L_ERROR("requested w = %d, h = %d, d = %d\n",
                 procName, width, height, depth);
-        return (PIX *)ERROR_PTR("wpl >= 2^29", procName, NULL);
+        return (PIX *)ERROR_PTR("wpl >= 2^24", procName, NULL);
     }
     wpl = (l_int32)wpl64;
     bignum = 4LL * wpl * height;   /* number of bytes to be requested */
@@ -470,6 +515,13 @@ PIX      *pixd;
                 procName, width, height, depth);
         return (PIX *)ERROR_PTR("requested bytes >= 2^31", procName, NULL);
     }
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    if (bignum > (1LL << 27)) {
+        L_ERROR("fuzzer requested > 128 MB; refused\n", procName);
+        return NULL;
+    }
+#endif   /* FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION */
 
     pixd = (PIX *)LEPT_CALLOC(1, sizeof(PIX));
     pixSetWidth(pixd, width);
@@ -554,7 +606,6 @@ PIX  *pix;
         return;
     pixFree(pix);
     *ppix = NULL;
-    return;
 }
 
 

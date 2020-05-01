@@ -90,6 +90,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include "allheaders.h"
 
@@ -99,7 +103,7 @@
 
 #define   PROTOARGS   "(l_uint32 *, l_int32, l_int32, l_int32, l_uint32 *, l_int32);"
 
-static const l_int32  L_BUF_SIZE = 512;
+#define L_BUF_SIZE 512
 
 static char * makeBarrelshiftString(l_int32 delx, l_int32 dely, l_int32 type);
 static SARRAY * sarrayMakeInnerLoopDWACode(SEL *sel, l_int32 nhits, l_int32 nmisses);
@@ -585,7 +589,8 @@ SEL     *sel;
             }
         }
         if (nhits == 0) {
-            linestr = stringNew("    fprintf(stderr, \"Error in HMT: no hits in sel!\\n\");\n}\n\n");
+            linestr = stringNew("    "
+                "lept_stderr(\"Error in HMT: no hits in sel!\\n\");\n}\n\n");
             sarrayAddString(sa4, linestr, L_INSERT);
             continue;
         }

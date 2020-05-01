@@ -42,20 +42,22 @@ set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake Targets")
 project(leptonica C CXX)
 
 set(VERSION_MAJOR 1)
-set(VERSION_MINOR 79)
+set(VERSION_MINOR 80)
 set(VERSION_PATCH 0)
 set(VERSION_PLAIN ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 set(MINIMUM_WEBPMUX_VERSION 0.5.0)
 
 option(BUILD_PROG "Build utility programs" OFF)
-option(CPPAN_BUILD "Build with cppan" ON)
-option(SYM_LINK "Create symlink leptonica -> lept on UNIX" OFF)
-
-if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.cppan)
-    set(CPPAN_BUILD OFF)
+if (WIN32)
+    option(SW_BUILD "Build with sw" ON)
+else()
+    option(SW_BUILD "Build with sw" OFF)
+endif()
+if(UNIX)
+    option(SYM_LINK "Create symlink leptonica -> lept on UNIX" OFF)
 endif()
 
-if(NOT CPPAN_BUILD)
+if(NOT SW_BUILD)
     find_package(GIF)
     find_package(JPEG)
     find_package(PNG)
@@ -105,8 +107,17 @@ if(NOT CPPAN_BUILD)
              set(HAVE_LIBJP2K 1)
         endif()
     endif()
-else()  # CPPAN_BUILD=ON
-    add_subdirectory(.cppan)
+else() # SW_BUILD=ON
+    find_package(SW REQUIRED)
+    sw_add_package(
+        org.sw.demo.gif
+        org.sw.demo.jpeg
+        org.sw.demo.glennrp.png
+        org.sw.demo.tiff
+        org.sw.demo.webmproject.webp
+        org.sw.demo.uclouvain.openjpeg.openjp2
+    )
+    sw_execute()
 
     add_definitions(
         -DHAVE_LIBGIF=1
@@ -132,11 +143,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CLANG 1)
 endif()
 
-set(LIBRARY_TYPE SHARED)
-if (STATIC)
-    set(LIBRARY_TYPE)
-endif()
-
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "Setting build type to 'Release' as none was specified.")
@@ -146,24 +152,35 @@ else()
     message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 endif()
 
-if (WIN32)
-    if (MSVC)
-        add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-        add_compile_options("$<$<CONFIG:Release>:/W1;/Ox>")
-        add_compile_options("$<$<CONFIG:Debug>:/W4;/DDEBUG>")
-        if (NOT CLANG)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-        endif()
+include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
+
+macro(CHECK_CCXX_COMPILER_FLAG _FLAG _RESULT)
+    check_c_compiler_flag(${_FLAG} C_HAS${_RESULT})
+    check_cxx_compiler_flag(${_FLAG} CXX_HAS${_RESULT})
+endmacro()
+
+if (MSVC)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    add_compile_options("$<$<CONFIG:Release>:/W1;/Ox>")
+    add_compile_options("$<$<CONFIG:Debug>:/W4;/DDEBUG>")
+    if (NOT CLANG)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
     endif()
 else()
-   if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        # Enable warnings
-        add_compile_options(-Wall -Wextra -Werror=format-security -pedantic)
-        add_compile_options(-g -DDEBUG -Og -g3)
-        # Optimize for Debugging
-        if (CMAKE_C_COMPILER_ID MATCHES "GNU")
-            add_compile_options(-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=.)
-        endif()
+   if (CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg]")
+        # Enable warnings and Optimize for Debugging
+        foreach(FLAG -Wall -Wextra -Werror=format-security -pedantic -Og -g3 "-fdebug-prefix-map=${CMAKE_SOURCE_DIR}=.")
+            string(REGEX REPLACE "[^A-Za-z0-9]" "_" flag_var "${FLAG}")
+            check_ccxx_compiler_flag(${FLAG} ${flag_var})
+            if(C_HAS${flag_var})
+                set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${FLAG}")
+            endif()
+            if(CXX_HAS${flag_var})
+                set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${FLAG}")
+            endif()
+        endforeach()
+        add_definitions(-DDEBUG)
     endif()
 endif()
 
@@ -197,9 +214,9 @@ message( STATUS "C compiler options: ${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE_UP}} ${C
 message( STATUS "Linker options: ${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS_${CMAKE_BUILD_TYPE_UP}}")
 message( STATUS "Install directory: ${CMAKE_INSTALL_PREFIX}")
 message( STATUS )
-message( STATUS "Build with cppan [CPPAN_BUILD]: ${CPPAN_BUILD}")
+message( STATUS "Build with sw [SW_BUILD]: ${SW_BUILD}")
 message( STATUS "Build utility programs [BUILD_PROG]: ${BUILD_PROG}")
-if(NOT CPPAN_BUILD)
+if(NOT SW_BUILD)
     message( STATUS "Used ZLIB library: ${ZLIB_LIBRARIES}")
     message( STATUS "Used PNG library:  ${PNG_LIBRARIES}")
     message( STATUS "Used JPEG library: ${JPEG_LIBRARIES}")

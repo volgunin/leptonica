@@ -88,6 +88,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 /*!
@@ -267,7 +271,7 @@ L_STACK  *stack, *auxstack;
 
 #if  DEBUG
     pixCountPixels(pix1, &iszero, NULL);
-    fprintf(stderr, "Number of remaining pixels = %d\n", iszero);
+    lept_stderr("Number of remaining pixels = %d\n", iszero);
     lept_mkdir("lept/cc");
     pixWriteDebug("/tmp/lept/cc/remain.png", pix1, IFF_PNG);
 #endif  /* DEBUG */
@@ -359,7 +363,7 @@ L_STACK  *stack, *auxstack;
 
 #if  DEBUG
     pixCountPixels(pix1, &iszero, NULL);
-    fprintf(stderr, "Number of remaining pixels = %d\n", iszero);
+    lept_stderr("Number of remaining pixels = %d\n", iszero);
     lept_mkdir("lept/cc");
     pixWriteDebug("/tmp/lept/cc/remain.png", pix1, IFF_PNG);
 #endif  /* DEBUG */
@@ -1129,7 +1133,6 @@ L_STACK  *auxstack;
         fseg->dy = dy;
         lstackAdd(stack, fseg);
     }
-    return;
 }
 
 
@@ -1186,7 +1189,6 @@ L_STACK  *auxstack;
         fseg->dy = dy;
         lstackAdd(stack, fseg);
     }
-    return;
 }
 
 
@@ -1238,5 +1240,4 @@ L_STACK  *auxstack;
 
         /* Save it for re-use */
     lstackAdd(auxstack, fseg);
-    return;
 }

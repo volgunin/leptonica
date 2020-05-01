@@ -42,8 +42,6 @@
  *    large number of images will be displayed on the screen.
  */
 
-    /* Needed for: HAVE_LIBJP2K, HAVE_LIBGIF,
-     *             HAVE_LIBWEBP and HAVE_LIBWEBP_ANIM  */
 #ifdef HAVE_CONFIG_H
 #include <config_auto.h>
 #endif /* HAVE_CONFIG_H */
@@ -76,8 +74,10 @@ static const char *tests[] = {
                               "bytea_reg",
                               "ccthin1_reg",
                               "ccthin2_reg",
+                              "checkerboard_reg",
                               "cmapquant_reg",
                               "colorcontent_reg",
+                              "colorinfo_reg",
                               "coloring_reg",
                               "colorize_reg",
                               "colormask_reg",
@@ -90,6 +90,7 @@ static const char *tests[] = {
                               "conncomp_reg",
                               "conversion_reg",
                               "convolve_reg",
+                              "crop_reg",
                               "dewarp_reg",
                               "distance_reg",
                               "dither_reg",
@@ -116,6 +117,7 @@ static const char *tests[] = {
                               "graymorph2_reg",
                               "grayquant_reg",
                               "hardlight_reg",
+                              "hash_reg",
                               "heap_reg",
                               "insert_reg",
                               "ioformats_reg",
@@ -147,6 +149,7 @@ static const char *tests[] = {
                               "pdfio1_reg",
                               "pdfio2_reg",
                               "pdfseg_reg",
+                              "pixa1_reg",
                               "pixa2_reg",
                               "pixadisp_reg",
                               "pixcomp_reg",
@@ -177,6 +180,7 @@ static const char *tests[] = {
                               "shear1_reg",
                               "shear2_reg",
                               "skew_reg",
+                              "smallpix_reg",
                               "speckle_reg",
                               "splitcomp_reg",
                               "string_reg",
@@ -218,7 +222,7 @@ static char  mainName[] = "alltests_reg";
     l_getCurrentTime(&start, NULL);
     ntests = sizeof(tests) / sizeof(char *);
     fprintf(stderr, "Running alltests_reg:\n"
-            "This currently tests %d of the 134 regression test\n"
+            "This currently tests %d regression test\n"
             "programs in the /prog directory.\n", ntests);
 
         /* Clear the output file if we're doing the set of reg tests */

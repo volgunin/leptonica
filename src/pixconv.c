@@ -153,6 +153,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include <math.h>
 #include "allheaders.h"
@@ -433,8 +437,8 @@ PIX       *pixd;
                     }
 #if DEBUG_UNROLLING
 #define CHECK_VALUE(a, b, c) if (GET_DATA_BYTE(a, b) != c) { \
-    fprintf(stderr, "Error: mismatch at %d, %d vs %d\n", \
-            j, GET_DATA_BYTE(a, b), c); }
+    lept_stderr("Error: mismatch at %d, %d vs %d\n", \
+                j, GET_DATA_BYTE(a, b), c); }
                     for (j = 0; j < w; j++) {
                         sval = GET_DATA_BYTE(lines, j);
                         gval = graymap[sval];
@@ -885,6 +889,8 @@ PIX       *pixd;
  *          value.
  *      (2) The default reference value for boosting the min and max
  *          is 200.  This can be changed with l_setNeutralBoostVal()
+ *      (3) The result with L_CHOOSE_MAXDIFF is surprisingly sensitive
+ *          to a jpeg compression/decompression cycle with quality = 75.
  * </pre>
  */
 PIX *
@@ -1404,9 +1410,7 @@ PIXCMAP   *cmap;
  *          the color in the colormap that represents all pixels in
  *          one of those octcubes is given by the first pixel that
  *          falls into that octcube.
- *      (3) If there are more than 256 colors, we use adaptive octree
- *          color quantization.
- *      (4) Dithering gives better visual results on images where
+ *      (3) Dithering gives better visual results on images where
  *          there is a color wash (a slow variation of color), but it
  *          is about twice as slow and results in significantly larger
  *          files when losslessly compressed (e.g., into png).
@@ -1436,26 +1440,25 @@ PIX     *pixd;
          * first pixel that lands there. */
     na = pixOctcubeHistogram(pixs, 4, &ncolors);
 
-        /* If there are too many occupied leaf octcubes to be
-         * represented directly in a colormap, fall back to octree
-         * quantization, optionally with dithering. */
-    if (ncolors > 256) {
+        /* If 256 or fewer occupied leaf octcubes, quantize to those octcubes */
+    if (ncolors <= 256) {
+        pixd = pixFewColorsOctcubeQuant2(pixs, 4, na, ncolors, NULL);
+        pixCopyInputFormat(pixd, pixs);
         numaDestroy(&na);
-        if (ditherflag)
-            L_INFO("More than 256 colors; using octree quant with dithering\n",
-                   procName);
-        else
-            L_INFO("More than 256 colors; using octree quant; no dithering\n",
-                   procName);
-        return pixOctreeColorQuant(pixs, 240, ditherflag);
+        return pixd;
     }
 
-        /* There are not more than 256 occupied leaf octcubes.
-         * Quantize to those octcubes. */
-    pixd = pixFewColorsOctcubeQuant2(pixs, 4, na, ncolors, NULL);
-    pixCopyInputFormat(pixd, pixs);
+        /* There are too many occupied leaf octcubes to be represented
+         * directly in a colormap.  Fall back to octree quantization,
+         * optionally with dithering. */
     numaDestroy(&na);
-    return pixd;
+    if (ditherflag)
+        L_INFO("More than 256 colors; using octree quant with dithering\n",
+               procName);
+    else
+        L_INFO("More than 256 colors; using octree quant; no dithering\n",
+               procName);
+    return pixOctreeColorQuant(pixs, 240, ditherflag);
 }
 
 
@@ -1766,7 +1769,6 @@ PIX       *pixd;
 }
 
 
-
 /*---------------------------------------------------------------------------*
  *                Conversion from grayscale to false color
  *---------------------------------------------------------------------------*/
@@ -1790,11 +1792,9 @@ PIX *
 pixConvertGrayToFalseColor(PIX       *pixs,
                            l_float32  gamma)
 {
-l_int32    d, i, rval, bval, gval;
-l_int32   *curve;
-l_float32  invgamma, x;
-PIX       *pixd;
-PIXCMAP   *cmap;
+l_int32   d;
+PIX      *pixd;
+PIXCMAP  *cmap;
 
     PROCNAME("pixConvertGrayToFalseColor");
 
@@ -1814,46 +1814,11 @@ PIXCMAP   *cmap;
     }
     if (!pixd)
         return (PIX *)ERROR_PTR("pixd not made", procName, NULL);
-    cmap = pixcmapCreate(8);
+
+    cmap = pixcmapGrayToFalseColor(gamma);
     pixSetColormap(pixd, cmap);
     pixCopyResolution(pixd, pixs);
     pixCopyInputFormat(pixd, pixs);
-
-        /* Generate curve for transition part of color map */
-    curve = (l_int32 *)LEPT_CALLOC(64, sizeof(l_int32));
-    if (gamma == 0.0) gamma = 1.0;
-    invgamma = 1. / gamma;
-    for (i = 0; i < 64; i++) {
-        x = (l_float32)i / 64.;
-        curve[i] = (l_int32)(255. * powf(x, invgamma) + 0.5);
-    }
-
-    for (i = 0; i < 256; i++) {
-        if (i < 32) {
-            rval = 0;
-            gval = 0;
-            bval = curve[i + 32];
-        } else if (i < 96) {   /* 32 - 95 */
-            rval = 0;
-            gval = curve[i - 32];
-            bval = 255;
-        } else if (i < 160) {  /* 96 - 159 */
-            rval = curve[i - 96];
-            gval = 255;
-            bval = curve[159 - i];
-        } else if (i < 224) {  /* 160 - 223 */
-            rval = 255;
-            gval = curve[223 - i];
-            bval = 0;
-        } else {  /* 224 - 255 */
-            rval = curve[287 - i];
-            gval = 0;
-            bval = 0;
-        }
-        pixcmapAddColor(cmap, rval, gval, bval);
-    }
-
-    LEPT_FREE(curve);
     return pixd;
 }
 
@@ -3929,7 +3894,7 @@ PIXCMAP  *cmap;
         pixd = pixConvert16To8(pixs, L_MS_BYTE);
         break;
     default:
-        fprintf(stderr, "depth not in {1, 2, 4, 8, 16, 32}");
+        lept_stderr("depth not in {1, 2, 4, 8, 16, 32}");
         return NULL;
    }
 

@@ -38,12 +38,15 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
     /* Static helplers */
 static BOXA *pixLocateStaveSets(PIX *pixs, l_int32 pageno, PIXA *pixadb);
 static l_ok boxaRemoveVGaps(BOXA *boxa);
-
 
 /*---------------------------------------------------------------------*
  *                              Top level                              *
@@ -179,18 +182,18 @@ PIXAC    **pixaca;
         pixDestroy(&pix4);
 
             /* Find the stave sets at 4x reduction */
-        boxa1 = pixLocateStaveSets(pix1, pageno, pixadb); 
+        boxa1 = pixLocateStaveSets(pix1, pageno, pixadb);
 
             /* Break each stave set into the separate staves (parts).
              * A typical set will have more than one part, but if one of
              * the parts is a keyboard, it will usually have two staves
              * (also called a Grand Staff), composed of treble and
              * bass staves.  For example, a classical violin sonata
-             * could have a staff for the violin and two staves for 
+             * could have a staff for the violin and two staves for
              * the piano.  We would set nparts == 2, and extract both
              * of the piano staves as the piano part.  */
         nbox = boxaGetCount(boxa1);
-        fprintf(stderr, "number of boxes in page %d: %d\n", pageno, nbox);
+        lept_stderr("number of boxes in page %d: %d\n", pageno, nbox);
         for (i = 0; i < nbox; i++, line++) {
             snprintf(buf, sizeof(buf), "%d", line);
             box1 = boxaGetBox(boxa1, i, L_COPY);
@@ -247,7 +250,7 @@ PIXAC    **pixaca;
  * \return   boxa   containing the stave sets at full resolution
  */
 static BOXA *
-pixLocateStaveSets(PIX     *pixs, 
+pixLocateStaveSets(PIX     *pixs,
                    l_int32  pageno,
                    PIXA    *pixadb)
 {

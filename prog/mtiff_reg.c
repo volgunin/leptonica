@@ -33,6 +33,10 @@
  *       - writing special tiff tags to file [not tested here]
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 #include <string.h>
 
@@ -54,6 +58,11 @@ PIX          *pix1, *pix2;
 PIXA         *pixa, *pixa1, *pixa2, *pixa3;
 SARRAY       *sa;
 L_REGPARAMS  *rp;
+
+#if !defined(HAVE_LIBPNG)
+    L_ERROR("This test requires libpng to run.\n", "mtiff_reg");
+    exit(77);
+#endif
 
    if (regTestSetup(argc, argv, &rp))
         return 1;
@@ -265,7 +274,7 @@ L_REGPARAMS  *rp;
     regTestCompareValues(rp, TRUE, success, 0);  /* 19 */
     if (success) {
         tiffGetCount(fp, &npages);
-        regTestCompareValues(rp, 4, npages, 0);  /* 20 */
+        regTestCompareValues(rp, 5, npages, 0);  /* 20 */
         fprintf(stderr, " Tiff: %d page\n", npages);
     }
     lept_fclose(fp);

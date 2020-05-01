@@ -34,7 +34,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include "config_auto.h"
+#include <config_auto.h>
 #endif  /* HAVE_CONFIG_H */
 
 #include "allheaders.h"
@@ -99,7 +99,7 @@
  * </pre>
  */
 char *
-getImagelibVersions()
+getImagelibVersions(void)
 {
 char     buf[128];
 l_int32  first = TRUE;

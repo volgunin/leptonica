@@ -58,6 +58,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include "allheaders.h"
 
@@ -256,7 +260,7 @@ PTAA    *ptaa1, *ptaa2;
         }
         convertFilesToPdf("/tmp/lept/dewmod", NULL, 135, 1.0, 0, 0,
                           "Dewarp Build Model", debugfile);
-        fprintf(stderr, "pdf file: %s\n", debugfile);
+        lept_stderr("pdf file: %s\n", debugfile);
     }
 
     ptaaDestroy(&ptaa2);
@@ -511,7 +515,7 @@ FPIX       *fpix;
         convertFilesToPdf("/tmp/lept/dewmod", "004", 135, 1.0, 0, 0,
                           "Dewarp Vert Disparity",
                           "/tmp/lept/dewarp/vert_disparity.pdf");
-        fprintf(stderr, "pdf file: /tmp/lept/dewarp/vert_disparity.pdf\n");
+        lept_stderr("pdf file: /tmp/lept/dewarp/vert_disparity.pdf\n");
     }
 
         /* Save the result in a fpix at the specified subsampling  */
@@ -682,7 +686,7 @@ FPIX      *fpix;
         convertFilesToPdf("/tmp/lept/dewmod", "005", 135, 1.0, 0, 0,
                           "Dewarp Horiz Disparity",
                           "/tmp/lept/dewarp/horiz_disparity.pdf");
-        fprintf(stderr, "pdf file: /tmp/lept/dewarp/horiz_disparity.pdf\n");
+        lept_stderr("pdf file: /tmp/lept/dewarp/horiz_disparity.pdf\n");
         pixDestroy(&pix1);
         ptaDestroy(&pta1);
         ptaDestroy(&pta2);
@@ -1410,6 +1414,7 @@ l_float32  fract, delta, sum, aveval, fval, del, denom;
 l_float32  ca, cb, cc, cd, ce, y;
 BOX       *box;
 BOXA      *boxa1, *boxa2;
+GPLOT     *gplot;
 NUMA      *na1, *na2, *na3, *na4, *nasum;
 PIX       *pix1;
 PTA       *pta1;
@@ -1433,7 +1438,7 @@ FPIX      *fpix;
     boxa2 = boxaSelectBySize(boxa1, 0, 5, L_SELECT_HEIGHT, L_SELECT_IF_GT,
                              NULL);
     nb = boxaGetCount(boxa2);
-    fprintf(stderr, "number of components: %d\n", nb);
+    lept_stderr("number of components: %d\n", nb);
     boxaDestroy(&boxa1);
 
         /* Estimate the horizontal density of vertical strokes */
@@ -1529,8 +1534,9 @@ FPIX      *fpix;
     ptaGetQuarticLSF(pta1, &ca, &cb, &cc, &cd, &ce, &na3);
     ptaGetArrays(pta1, &na4, NULL);
     if (dew->debug) {
-        gplotSimpleXY1(na4, na3, GPLOT_LINES, GPLOT_PNG,
-                       "/tmp/lept/dew/0094", NULL);
+        gplot = gplotSimpleXY1(na4, na3, GPLOT_LINES, GPLOT_PNG,
+                              "/tmp/lept/dew/0094", NULL);
+        gplotDestroy(&gplot);
         lept_mv("/tmp/lept/dew/0094.png", "lept/dewmod", NULL, NULL);
     }
     ptaDestroy(&pta1);
@@ -1786,7 +1792,7 @@ PTAA    *ptaa1, *ptaa2;
         }
         convertFilesToPdf("/tmp/lept/dewline", NULL, 135, 1.0, 0, 0,
                           "Dewarp Build Line Model", debugfile);
-        fprintf(stderr, "pdf file: %s\n", debugfile);
+        lept_stderr("pdf file: %s\n", debugfile);
     }
 
     return 0;

@@ -51,6 +51,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include "allheaders.h"
 
@@ -60,7 +64,6 @@ static l_int32 boxaFillAll(BOXA *boxa);
 
 static void adjustSidePlotName(char *buf, size_t size, const char *preface,
                                l_int32 select);
-
 
 /*---------------------------------------------------------------------*
  *                        Boxa sequence fitting                        *
@@ -116,6 +119,7 @@ boxaSmoothSequenceMedian(BOXA    *boxas,
 {
 l_int32  n;
 BOXA    *boxae, *boxao, *boxamede, *boxamedo, *boxame, *boxamo, *boxad;
+PIX     *pix1;
 
     PROCNAME("boxaSmoothSequenceMedian");
 
@@ -163,10 +167,18 @@ BOXA    *boxae, *boxao, *boxamede, *boxamedo, *boxame, *boxamo, *boxad;
 
     boxad = boxaMergeEvenOdd(boxame, boxamo, 0);
     if (debug) {
-        boxaPlotSides(boxas, NULL, NULL, NULL, NULL, NULL, NULL);
-        boxaPlotSides(boxad, NULL, NULL, NULL, NULL, NULL, NULL);
-        boxaPlotSizes(boxas, NULL, NULL, NULL, NULL);
-        boxaPlotSizes(boxad, NULL, NULL, NULL, NULL);
+        boxaPlotSides(boxas, NULL, NULL, NULL, NULL, NULL, &pix1);
+        pixWrite("/tmp/lept/smooth/plotsides1.png", pix1, IFF_PNG);
+        pixDestroy(&pix1);
+        boxaPlotSides(boxad, NULL, NULL, NULL, NULL, NULL, &pix1);
+        pixWrite("/tmp/lept/smooth/plotsides2.png", pix1, IFF_PNG);
+        pixDestroy(&pix1);
+        boxaPlotSizes(boxas, NULL, NULL, NULL, &pix1);
+        pixWrite("/tmp/lept/smooth/plotsizes1.png", pix1, IFF_PNG);
+        pixDestroy(&pix1);
+        boxaPlotSizes(boxad, NULL, NULL, NULL, &pix1);
+        pixWrite("/tmp/lept/smooth/plotsizes2.png", pix1, IFF_PNG);
+        pixDestroy(&pix1);
     }
 
     boxaDestroy(&boxae);
@@ -206,6 +218,7 @@ l_int32  n, i, left, top, right, bot;
 BOX     *box;
 BOXA    *boxaf, *boxad;
 NUMA    *nal, *nat, *nar, *nab, *naml, *namt, *namr, *namb;
+PIX     *pix1;
 
     PROCNAME("boxaWindowedMedian");
 
@@ -243,10 +256,19 @@ NUMA    *nal, *nat, *nar, *nab, *naml, *namt, *namr, *namb;
     }
 
     if (debug) {
-        boxaPlotSides(boxaf, NULL, NULL, NULL, NULL, NULL, NULL);
-        boxaPlotSides(boxad, NULL, NULL, NULL, NULL, NULL, NULL);
-        boxaPlotSizes(boxaf, NULL, NULL, NULL, NULL);
-        boxaPlotSizes(boxad, NULL, NULL, NULL, NULL);
+        lept_mkdir("lept/windowed");
+        boxaPlotSides(boxaf, NULL, NULL, NULL, NULL, NULL, &pix1);
+        pixWrite("/tmp/lept/windowed/plotsides1.png", pix1, IFF_PNG);
+        pixDestroy(&pix1);
+        boxaPlotSides(boxad, NULL, NULL, NULL, NULL, NULL, &pix1);
+        pixWrite("/tmp/lept/windowed/plotsides2.png", pix1, IFF_PNG);
+        pixDestroy(&pix1);
+        boxaPlotSizes(boxaf, NULL, NULL, NULL, &pix1);
+        pixWrite("/tmp/lept/windowed/plotsizes1.png", pix1, IFF_PNG);
+        pixDestroy(&pix1);
+        boxaPlotSizes(boxad, NULL, NULL, NULL, &pix1);
+        pixWrite("/tmp/lept/windowed/plotsizes2.png", pix1, IFF_PNG);
+        pixDestroy(&pix1);
     }
 
     boxaDestroy(&boxaf);
@@ -1043,8 +1065,8 @@ PIXA      *pixa;
     *pfdevw = devw / medw;
     *pfdevh = devh / medh;
     if (debug) {
-        fprintf(stderr, "medw = %5.1f, medh = %5.1f\n", medw, medh);
-        fprintf(stderr, "fdevw = %6.3f, fdevh = %6.3f\n", *pfdevw, *pfdevh);
+        lept_stderr("medw = %5.1f, medh = %5.1f\n", medw, medh);
+        lept_stderr("fdevw = %6.3f, fdevh = %6.3f\n", *pfdevw, *pfdevh);
         boxaPlotSizes(boxas, "input_boxa", NULL, NULL, &pix1);
         boxaPlotSizes(boxa1, "regularized_boxa", NULL, NULL, &pix2);
         pixDisplay(pix1, 500, 0);
@@ -1096,9 +1118,7 @@ boxaReconcileAllByMedian(BOXA    *boxas,
                          l_int32  extra,
                          PIXA    *pixadb)
  {
-l_int32  i, n, diff, ncols;
-l_int32  left, right, top, bot, medleft, medright, medtop, medbot;
-BOX     *box;
+l_int32  ncols;
 BOXA    *boxa1e, *boxa1o, *boxa2e, *boxa2o, *boxa3e, *boxa3o, *boxad;
 PIX     *pix1;
 
@@ -1261,7 +1281,7 @@ PIX     *pix;
             pixaAddPix(pixadb, pix, L_INSERT);
         }
     }
-    
+
     n = boxaGetCount(boxas);
     boxad = boxaCreate(n);
     if (select == L_ADJUST_LEFT) {
@@ -1312,7 +1332,7 @@ PIX     *pix;
         pixaAddPix(pixadb, pix, L_INSERT);
     }
     return boxad;
-} 
+}
 
 
 static void
@@ -1635,7 +1655,7 @@ NUMA      *naind, *nadelw, *nadelh;
  * \param[out]   pnat       [optional] na of top sides
  * \param[out]   pnar       [optional] na of right sides
  * \param[out]   pnab       [optional] na of bottom sides
- * \param[out]   ppixd      [optional] pix of the output plot
+ * \param[out]   ppixd      pix of the output plot
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -1680,6 +1700,8 @@ NUMA           *nal, *nat, *nar, *nab;
         return ERROR_INT("boxa not defined", procName, 1);
     if ((n = boxaGetCount(boxa)) < 2)
         return ERROR_INT("less than 2 boxes", procName, 1);
+    if (!ppixd)
+        return ERROR_INT("&pixd not defined", procName, 1);
 
     boxat = boxaFillSequence(boxa, L_USE_ALL_BOXES, 0);
 
@@ -1715,32 +1737,28 @@ NUMA           *nal, *nat, *nar, *nab;
     gplotAddPlot(gplot, NULL, nat, GPLOT_LINES, "top side");
     gplotAddPlot(gplot, NULL, nar, GPLOT_LINES, "right side");
     gplotAddPlot(gplot, NULL, nab, GPLOT_LINES, "bottom side");
-    gplotMakeOutput(gplot);
+    *ppixd = gplotMakeOutputPix(gplot);
     gplotDestroy(&gplot);
 
-    if (ppixd) {
-        stringCat(buf, sizeof(buf), ".png");
-        *ppixd = pixRead(buf);
-        if (debugprint) {
-            dataname = (plotname) ? stringNew(plotname) : stringNew("no_name");
-            numaGetMedian(nal, &med);
-            numaGetMeanDevFromMedian(nal, med, &dev);
-            fprintf(stderr, "%s left: med = %7.3f, meandev = %7.3f\n",
+    if (debugprint) {
+        dataname = (plotname) ? stringNew(plotname) : stringNew("no_name");
+        numaGetMedian(nal, &med);
+        numaGetMeanDevFromMedian(nal, med, &dev);
+        lept_stderr("%s left: med = %7.3f, meandev = %7.3f\n",
                     dataname, med, dev);
-            numaGetMedian(nat, &med);
-            numaGetMeanDevFromMedian(nat, med, &dev);
-            fprintf(stderr, "%s top: med = %7.3f, meandev = %7.3f\n",
+        numaGetMedian(nat, &med);
+        numaGetMeanDevFromMedian(nat, med, &dev);
+        lept_stderr("%s top: med = %7.3f, meandev = %7.3f\n",
                     dataname, med, dev);
-            numaGetMedian(nar, &med);
-            numaGetMeanDevFromMedian(nar, med, &dev);
-            fprintf(stderr, "%s right: med = %7.3f, meandev = %7.3f\n",
+        numaGetMedian(nar, &med);
+        numaGetMeanDevFromMedian(nar, med, &dev);
+        lept_stderr("%s right: med = %7.3f, meandev = %7.3f\n",
                     dataname, med, dev);
-            numaGetMedian(nab, &med);
-            numaGetMeanDevFromMedian(nab, med, &dev);
-            fprintf(stderr, "%s bot: med = %7.3f, meandev = %7.3f\n",
+        numaGetMedian(nab, &med);
+        numaGetMeanDevFromMedian(nab, med, &dev);
+        lept_stderr("%s bot: med = %7.3f, meandev = %7.3f\n",
                     dataname, med, dev);
-            LEPT_FREE(dataname);
-        }
+        LEPT_FREE(dataname);
     }
 
     if (pnal)
@@ -1770,7 +1788,7 @@ NUMA           *nal, *nat, *nar, *nab;
  * \param[in]    plotname   [optional], can be NULL
  * \param[out]   pnaw       [optional] na of widths
  * \param[out]   pnah       [optional] na of heights
- * \param[out]   ppixd      [optional] pix of the output plot
+ * \param[out]   ppixd      pix of the output plot
  * \return  0 if OK, 1 on error
  *
  * <pre>
@@ -1808,13 +1826,14 @@ NUMA           *naw, *nah;
         return ERROR_INT("boxa not defined", procName, 1);
     if ((n = boxaGetCount(boxa)) < 2)
         return ERROR_INT("less than 2 boxes", procName, 1);
+    if (!ppixd)
+        return ERROR_INT("&pixd not defined", procName, 1);
 
     boxat = boxaFillSequence(boxa, L_USE_ALL_BOXES, 0);
 
         /* Build the numas for the width and height */
     naw = numaCreate(n);
     nah = numaCreate(n);
-
     for (i = 0; i < n; i++) {
         boxaGetBoxGeometry(boxat, i, NULL, NULL, &w, &h);
         numaAddNumber(naw, w);
@@ -1835,13 +1854,8 @@ NUMA           *naw, *nah;
                         "box index", "box dimension");
     gplotAddPlot(gplot, NULL, naw, GPLOT_LINES, "width");
     gplotAddPlot(gplot, NULL, nah, GPLOT_LINES, "height");
-    gplotMakeOutput(gplot);
+    *ppixd = gplotMakeOutputPix(gplot);
     gplotDestroy(&gplot);
-
-    if (ppixd) {
-        stringCat(buf, sizeof(buf), ".png");
-        *ppixd = pixRead(buf);
-    }
 
     if (pnaw)
         *pnaw = naw;

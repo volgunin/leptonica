@@ -24,12 +24,17 @@
  -  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *====================================================================*/
 
+
 /*
  *  italic_reg.c
  *
  *     This demonstrates binary reconstruction for finding italic text.
  *     It also tests debug output of word masking.
  */
+
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
 
 #include "allheaders.h"
 
@@ -42,6 +47,11 @@ BOXA         *boxa1, *boxa2, *boxa3, *boxa4;
 PIX          *pixs, *pixm, *pix1;
 PIXA         *pixadb;
 L_REGPARAMS  *rp;
+
+#if !defined(HAVE_LIBPNG)
+    L_ERROR("This test requires libpng to run.\n", "italic_reg");
+    exit(77);
+#endif
 
     if (regTestSetup(argc, argv, &rp))
         return 1;

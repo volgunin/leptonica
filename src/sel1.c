@@ -95,6 +95,7 @@
  *         Making hit-miss sels from Pix and image files
  *            SEL       *selReadFromColorImage()
  *            SEL       *selCreateFromColorPix()
+              SELA      *selaCreateFromColorPixa()
  *
  *         Printable display of sel
  *            PIX       *selDisplayInPix()
@@ -137,6 +138,10 @@
  *             selSetElement(), with input (row, col, type)
  * </pre>
  */
+
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
 
 #include <string.h>
 #include "allheaders.h"
@@ -281,7 +286,6 @@ l_int32  i;
     LEPT_FREE(sela->sel);
     LEPT_FREE(sela);
     *psela = NULL;
-    return;
 }
 
 
@@ -353,9 +357,7 @@ SEL     *sel;
     if (sel->name)
         LEPT_FREE(sel->name);
     LEPT_FREE(sel);
-
     *psel = NULL;
-    return;
 }
 
 
@@ -486,8 +488,8 @@ SEL     *sel;
         /* Lay down the elements of the comb */
     for (i = 0; i < factor2; i++) {
         z = factor1 / 2 + i * factor1;
-/*        fprintf(stderr, "i = %d, factor1 = %d, factor2 = %d, z = %d\n",
-                        i, factor1, factor2, z); */
+/*        lept_stderr("i = %d, factor1 = %d, factor2 = %d, z = %d\n",
+                      i, factor1, factor2, z); */
         if (direction == L_HORIZ)
             selSetElement(sel, 0, z, SEL_HIT);
         else
@@ -1081,7 +1083,6 @@ SELA    *selabasic, *selacomb;
     sarrayDestroy(&sa);
     selaDestroy(&selabasic);
     selaDestroy(&selacomb);
-    return;
 }
 #endif
 /* -------------------------------------------------------------------- */
@@ -1648,6 +1649,7 @@ char     ch;
                 case 'X':
                     norig++;
                     selSetOrigin(sel, y, x);
+                    /* fall through */
                 case 'x':
                     selSetElement(sel, y, x, SEL_HIT);
                     break;
@@ -1655,6 +1657,7 @@ char     ch;
                 case 'O':
                     norig++;
                     selSetOrigin(sel, y, x);
+                    /* fall through */
                 case 'o':
                     selSetElement(sel, y, x, SEL_MISS);
                     break;
@@ -1662,6 +1665,7 @@ char     ch;
                 case 'C':
                     norig++;
                     selSetOrigin(sel, y, x);
+                    /* fall through */
                 case ' ':
                     selSetElement(sel, y, x, SEL_DONT_CARE);
                     break;
@@ -1834,7 +1838,7 @@ SELA    *sela;
         numaGetIValue(nafirst, i, &first);
         numaGetIValue(nalast, i, &last);
         if ((sel = selCreateFromSArray(sa, first, last)) == NULL) {
-            fprintf(stderr, "Error reading sel from %d to %d\n", first, last);
+            lept_stderr("Error reading sel from %d to %d\n", first, last);
             selaDestroy(&sela);
             sarrayDestroy(&sa);
             numaDestroy(&nafirst);
@@ -1917,18 +1921,21 @@ SEL     *sel;
             {
                 case 'X':
                     selSetOrigin(sel, y, x);  /* set origin and hit */
+                    /* fall through */
                 case 'x':
                     selSetElement(sel, y, x, SEL_HIT);
                     break;
 
                 case 'O':
                     selSetOrigin(sel, y, x);  /* set origin and miss */
+                    /* fall through */
                 case 'o':
                     selSetElement(sel, y, x, SEL_MISS);
                     break;
 
                 case 'C':
                     selSetOrigin(sel, y, x);  /* set origin and don't-care */
+                    /* fall through */
                 case ' ':
                     selSetElement(sel, y, x, SEL_DONT_CARE);
                     break;
@@ -2116,7 +2123,7 @@ selCreateFromColorPix(PIX         *pixs,
 {
 PIXCMAP  *cmap;
 SEL      *sel;
-l_int32   hascolor, hasorigin, nohits;
+l_int32   hascolor, num_origins, nohits;
 l_int32   w, h, d, i, j, red, green, blue;
 l_uint32  pixval;
 
@@ -2135,10 +2142,10 @@ l_uint32  pixval;
 
     if ((sel = selCreate (h, w, NULL)) == NULL)
         return (SEL *)ERROR_PTR ("sel not made", procName, NULL);
-    selSetOrigin (sel, h / 2, w / 2);
+    selSetOrigin (sel, h / 2, w / 2);  /* default */
     selSetName(sel, selname);
 
-    hasorigin = FALSE;
+    num_origins = 0;
     nohits = TRUE;
     for (i = 0; i < h; i++) {
         for (j = 0; j < w; j++) {
@@ -2153,10 +2160,11 @@ l_uint32  pixval;
             }
 
             if (red < 255 && green < 255 && blue < 255) {
-                if (hasorigin)
+                num_origins++;
+                if (num_origins == 1)  /* first one found */
+                    selSetOrigin (sel, i, j);
+                if (num_origins == 2)
                     L_WARNING("multiple origins in sel image\n", procName);
-                selSetOrigin (sel, i, j);
-                hasorigin = TRUE;
             }
             if (!red && green && !blue) {
                 nohits = FALSE;
@@ -2177,6 +2185,52 @@ l_uint32  pixval;
         return (SEL *)ERROR_PTR("no hits in sel", procName, NULL);
     }
     return sel;
+}
+
+
+/*!
+ *
+ *  selaCreateFromColorPixa()
+ *
+ * \param[in]    pixa      color pixa representing the sels
+ * \param[in]    sa        sarray of sel names
+ * \return  sel if OK, NULL on error
+ *
+ * <pre>
+ * Notes:
+ *      (1) See notes in selCreateFromColorPix()
+ *      (2) sa is required because all sels that are put in a sela
+ *          must have a name.
+ * </pre>
+ */
+SELA *
+selaCreateFromColorPixa(PIXA    *pixa,
+                        SARRAY  *sa)
+{
+char    *str;
+l_int32  i, n;
+PIX     *pix;
+SEL     *sel;
+SELA    *sela;
+
+    PROCNAME("selaCreateFromColorPixa");
+
+    if (!pixa)
+        return (SELA *)ERROR_PTR("pixa not defined", procName, NULL);
+    if (!sa)
+        return (SELA *)ERROR_PTR("sa of sel names not defined", procName, NULL);
+
+    n = pixaGetCount(pixa);
+    if ((sela = selaCreate(n)) == NULL)
+        return (SELA *)ERROR_PTR("sela not allocated", procName, NULL);
+    for (i = 0; i < n; i++) {
+        pix = pixaGetPix(pixa, i, L_CLONE);
+        str = sarrayGetString(sa, i, L_NOCOPY);
+        sel = selCreateFromColorPix(pix, str);
+        selaAddSel(sela, sel, NULL, L_INSERT);
+        pixDestroy(&pix);
+    }
+    return sela;
 }
 
 

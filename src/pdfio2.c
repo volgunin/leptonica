@@ -91,6 +91,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <string.h>
 #include <math.h>
 #include "allheaders.h"
@@ -441,14 +445,14 @@ NUMAA    *naa_objs;  /* object mapping numbers to new values */
     l_byteaDestroy(&bad);
 
 #if  DEBUG_MULTIPAGE
-    fprintf(stderr, "******** object mapper **********");
+    lept_stderr("******** object mapper **********");
     numaaWriteStream(stderr, naa_objs);
 
-    fprintf(stderr, "******** Page object numbers ***********");
-    numaWriteStream(stderr, napage);
+    lept_stderr("******** Page object numbers ***********");
+    numaWriteStderr(napage);
 
-    fprintf(stderr, "******** Pages object ***********\n");
-    fprintf(stderr, "%s\n", str_pages);
+    lept_stderr("******** Pages object ***********\n");
+    lept_stderr("%s\n", str_pages);
 #endif  /* DEBUG_MULTIPAGE */
 
     numaDestroy(&napage);
@@ -1091,6 +1095,29 @@ PIXCMAP  *cmap;
     if (ascii85 != 0 && ascii85 != 1)
         return ERROR_INT("invalid ascii85", procName, 1);
 
+        /* Conditionally modify the encoding type if libz is
+         * available and the requested library is missing. */
+#if defined(HAVE_LIBZ)
+# if !defined(HAVE_LIBJPEG)
+    if (type == L_JPEG_ENCODE) {
+        L_WARNING("no libjpeg; using flate encoding\n", procName);
+        type = L_FLATE_ENCODE;
+    }
+# endif /* !defined(HAVE_LIBJPEG) */
+# if !defined(HAVE_LIBJP2K)
+    if (type == L_JP2K_ENCODE) {
+        L_WARNING("no libjp2k; using flate encoding\n", procName);
+        type = L_FLATE_ENCODE;
+    }
+# endif /* !defined(HAVE_LIBJP2K) */
+# if !defined(HAVE_LIBTIFF)
+    if (type == L_G4_ENCODE) {
+        L_WARNING("no libtiff; using flate encoding\n", procName);
+        type = L_FLATE_ENCODE;
+    }
+# endif /* !defined(HAVE_LIBTIFF) */
+#endif /* defined(HAVE_LIBZ) */
+
         /* Sanity check on requested encoding */
     d = pixGetDepth(pixs);
     cmap = pixGetColormap(pixs);
@@ -1168,12 +1195,15 @@ PIX          *pixs;
  * \param[in]    ascii85flag 0    for gzipped; 1 for ascii85-encoded gzipped
  * \return  cid flate compressed image data, or NULL on error
  *
- *      Notes:
- *          1) This should not be called with an RGBA pix (spp == 4; it
- *             will ignore the alpha channel.  Likewise, if called with a
- *             colormapped pix, the alpha component in the colormap will
- *             be ignored as it is for all leptonica operations
- *             on colormapped pix.
+ * <pre>
+ * Notes:
+ *     (1) If called with an RGBA pix (spp == 4), the alpha channel
+ *         will be removed, projecting a white backgrouond through
+ *         any transparency.
+ *     (2) If called with a colormapped pix, any transparency in the
+ *         alpha component in the colormap will be ignored, as it is
+ *         for all leptonica operations on colormapped pix.
+ * </pre>
  */
 static L_COMP_DATA *
 pixGenerateFlateData(PIX     *pixs,
@@ -1213,10 +1243,12 @@ PIXCMAP      *cmap;
         pixt = pixConvertTo8(pixs, cmapflag);
         cmap = pixGetColormap(pixt);
         d = pixGetDepth(pixt);
+    } else if (d == 32 && pixGetSpp(pixs) == 4) {  /* remove alpha */
+        pixt = pixAlphaBlendUniform(pixs, 0xffffff00);
     } else {
         pixt = pixClone(pixs);
     }
-    spp = (d == 32) ? 3 : 1;  /* ignores alpha */
+    spp = (d == 32) ? 3 : 1;
     bps = (d == 32) ? 8 : d;
 
         /* Extract and encode the colormap data as both ascii85 and hexascii  */
@@ -1582,7 +1614,6 @@ L_COMP_DATA  *cid;
     if (cid->cmapdatahex) LEPT_FREE(cid->cmapdatahex);
     LEPT_FREE(cid);
     *pcid = NULL;
-    return;
 }
 
 
@@ -1702,7 +1733,6 @@ SARRAY  *sa;
     lpd->poststream = stringNew("\n"
                                 "endstream\n"
                                 "endobj\n");
-    return;
 }
 
 
@@ -1780,8 +1810,6 @@ l_float32  xpt, ypt, wpt, hpt, maxx, maxy;
         ptaGetPt(lpd->wh, i, &wpt, &hpt);
         ptaSetPt(lpd->xy, i, xpt, maxy - ypt - hpt);
     }
-
-    return;
 }
 
 
@@ -2273,11 +2301,11 @@ SARRAY   *sa;
     l_dnaAddNumber(da, xrefloc);
 
 #if  DEBUG_MULTIPAGE
-    fprintf(stderr, "************** Trailer string ************\n");
-    fprintf(stderr, "xrefloc = %d", xrefloc);
+    lept_stderr("************** Trailer string ************\n");
+    lept_stderr("xrefloc = %d", xrefloc);
     sarrayWriteStream(stderr, sa);
 
-    fprintf(stderr, "************** Object locations ************");
+    lept_stderr("************** Object locations ************");
     l_dnaWriteStream(stderr, da);
 #endif  /* DEBUG_MULTIPAGE */
     sarrayDestroy(&sa);
@@ -2490,7 +2518,6 @@ L_PDF_DATA   *lpd;
     if (lpd->objloc) l_dnaDestroy(&lpd->objloc);
     LEPT_FREE(lpd);
     *plpd = NULL;
-    return;
 }
 
 

@@ -36,6 +36,10 @@
  *      - Flate compressed (gzip compression)
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 static const char *WeaselNames[] = {"weasel2.4c.png",
@@ -60,6 +64,19 @@ PIX          *pixs, *pixt;
 PIXA         *pixa;
 SARRAY       *sa;
 L_REGPARAMS  *rp;
+
+#if !defined(HAVE_LIBPNG)
+    L_ERROR("This test requires libpng to run.\n", "psio_reg");
+    exit(77);
+#endif
+#if !defined(HAVE_LIBJPEG)
+    L_ERROR("This test requires libjpeg to run.\n", "psio_reg");
+    exit(77);
+#endif
+#if !defined(HAVE_LIBTIFF)
+    L_ERROR("This test requires libtiff to run.\n", "psio_reg");
+    exit(77);
+#endif
 
     if (regTestSetup(argc, argv, &rp))
         return 1;

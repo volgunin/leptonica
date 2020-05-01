@@ -3,7 +3,7 @@ AM_CPPFLAGS = $(ZLIB_CFLAGS) $(LIBPNG_CFLAGS) $(JPEG_CFLAGS) $(LIBTIFF_CFLAGS) $
 lib_LTLIBRARIES = liblept.la
 liblept_la_LIBADD = $(LIBPNG_LIBS) $(JPEG_LIBS) $(GIFLIB_LIBS) $(LIBTIFF_LIBS) $(LIBWEBP_LIBS) $(LIBWEBPMUX_LIBS) $(LIBJP2K_LIBS) $(GDI_LIBS) $(LIBM) $(ZLIB_LIBS)
 
-liblept_la_LDFLAGS = -no-undefined -version-info 5:3:0
+liblept_la_LDFLAGS = -no-undefined -version-info 5:4:0
 
 liblept_la_SOURCES = adaptmap.c affine.c                        \
  affinecompose.c arrayaccess.c                                  \
@@ -15,8 +15,8 @@ liblept_la_SOURCES = adaptmap.c affine.c                        \
  bootnumgen3.c bootnumgen4.c                                    \
  boxbasic.c boxfunc1.c boxfunc2.c boxfunc3.c                    \
  boxfunc4.c boxfunc5.c bytearray.c                              \
- ccbord.c ccthin.c classapp.c                                   \
- colorcontent.c coloring.c                                      \
+ ccbord.c ccthin.c checkerboard.c                               \
+ classapp.c colorcontent.c colorinfo.c coloring.c               \
  colormap.c colormorph.c	                                \
  colorquant1.c colorquant2.c                                    \
  colorseg.c colorspace.c                                        \
@@ -66,7 +66,7 @@ liblept_la_SOURCES = adaptmap.c affine.c                        \
 
 pkginclude_HEADERS = allheaders.h alltypes.h                    \
  array.h arrayaccess.h bbuffer.h bilateral.h                    \
- bmf.h bmfdata.h bmp.h ccbord.h                                 \
+ bmf.h bmfdata.h bmp.h ccbord.h colorinfo.h                     \
  dewarp.h endianness.h environ.h		                \
  gplot.h heap.h imageio.h jbclass.h                             \
  leptwin.h list.h	                                        \

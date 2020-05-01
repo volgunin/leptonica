@@ -71,6 +71,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
     /* The node color enum is only needed in the rbtree implementation */
@@ -118,7 +122,6 @@ static void verify_properties(L_RBTREE *t);
 #define  VERIFY_RBTREE     0   /* only for debugging */
 #endif  /* ~NO_CONSOLE_IO */
 
-
 /* ------------------------------------------------------------- *
  *                   Interface to Red-black Tree                 *
  * ------------------------------------------------------------- */
@@ -131,13 +134,15 @@ static void verify_properties(L_RBTREE *t);
 L_RBTREE *
 l_rbtreeCreate(l_int32  keytype)
 {
+L_RBTREE  *t;
+
     PROCNAME("l_rbtreeCreate");
 
     if (keytype != L_INT_TYPE && keytype != L_UINT_TYPE &&
         keytype != L_FLOAT_TYPE && keytype)
         return (L_RBTREE *)ERROR_PTR("invalid keytype", procName, NULL);
 
-    L_RBTREE *t = (L_RBTREE *)LEPT_CALLOC(1, sizeof(L_RBTREE));
+    t = (L_RBTREE *)LEPT_CALLOC(1, sizeof(L_RBTREE));
     t->keytype = keytype;
     verify_properties(t);
     return t;
@@ -154,12 +159,14 @@ RB_TYPE *
 l_rbtreeLookup(L_RBTREE  *t,
                RB_TYPE    key)
 {
+node  *n;
+
     PROCNAME("l_rbtreeLookup");
 
     if (!t)
         return (RB_TYPE *)ERROR_PTR("tree is null\n", procName, NULL);
 
-    node *n = lookup_node(t, key);
+    n = lookup_node(t, key);
     return n == NULL ? NULL : &n->value;
 }
 
@@ -290,7 +297,6 @@ node    *n;
     destroy_helper(n);
     LEPT_FREE(*pt);
     *pt = NULL;
-    return;
 }
 
     /* postorder DFS */
@@ -307,7 +313,7 @@ destroy_helper(node  *n)
  * \brief   l_rbtreeGetFirst()
  *
  * \param[in]    t    rbtree, including root node
- * \return       void
+ * \return       first node, or NULL on error or if the tree is empty
  *
  * <pre>
  * Notes:
@@ -377,7 +383,7 @@ l_rbtreeGetNext(L_RBTREE_NODE  *n)
  * \brief   l_rbtreeGetLast()
  *
  * \param[in]   t      rbtree, including root node
- * \return      void
+ * \return      last node, or NULL on error or if the tree is empty
  *
  * <pre>
  * Notes:

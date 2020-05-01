@@ -164,6 +164,10 @@
  * </pre>
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include "allheaders.h"
 
@@ -282,7 +286,7 @@ PIX       *pixt;
         pixEqual(pixd, pixt, &boolval);
         if (boolval == 1) {
 #if DEBUG_PRINT_ITERS
-            fprintf(stderr, "Binary seed fill converged: %d iters\n", i + 1);
+            lept_stderr("Binary seed fill converged: %d iters\n", i + 1);
 #endif  /* DEBUG_PRINT_ITERS */
             break;
         }
@@ -574,7 +578,6 @@ l_uint32  *lines, *linem;
 
     default:
         L_ERROR("connectivity must be 4 or 8\n", procName);
-        return;
     }
 }
 
@@ -1235,7 +1238,6 @@ L_QUEUE  *lq_pixel;
 
             queue_size = lqueueGetCount(lq_pixel);
         }
-
         break;
 
     case 8:
@@ -1467,7 +1469,6 @@ L_QUEUE  *lq_pixel;
 
     default:
         L_ERROR("shouldn't get here!\n", procName);
-        break;
     }
 
     lqueueDestroy(&lq_pixel, TRUE);
@@ -1695,7 +1696,6 @@ L_QUEUE  *lq_pixel;
 
             queue_size = lqueueGetCount(lq_pixel);
         }
-
         break;
 
     case 8:
@@ -1930,7 +1930,6 @@ L_QUEUE  *lq_pixel;
 
     default:
         L_ERROR("shouldn't get here!\n", procName);
-        break;
     }
 
     lqueueDestroy(&lq_pixel, TRUE);
@@ -2738,7 +2737,6 @@ l_uint32  *lined;
 
     default:
         L_ERROR("connectivity must be 4 or 8\n", procName);
-        break;
     }
 }
 

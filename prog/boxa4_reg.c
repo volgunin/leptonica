@@ -30,6 +30,10 @@
  *    This carries out some smoothing and display operations on boxa.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 int main(int    argc,
@@ -45,6 +49,11 @@ BOXAA        *baa1, *baa2, *baa3;
 PIX          *pix1, *pix2, *pix3;
 PIXA         *pixa1, *pixa2;
 L_REGPARAMS  *rp;
+
+#if !defined(HAVE_LIBPNG)
+    L_ERROR("This test requires libpng to run.\n", "boxa4_reg");
+    exit(77);
+#endif
 
     if (regTestSetup(argc, argv, &rp))
         return 1;

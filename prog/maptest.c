@@ -41,6 +41,10 @@
  *   * test RGB histogram and counting functions in pix4.c
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 static L_AMAP *BuildMapHistogram(PIX *pix, l_int32 factor, l_int32 print);
@@ -57,7 +61,7 @@ static void TestMapIterator5(L_AMAP *m, l_int32  print);
 l_int32 main(int    argc,
              char **argv)
 {
-l_int32    i, n, w, h;
+l_int32    i, n, w, h, ncolors;
 l_uint32   val32;
 L_AMAP    *m;
 NUMA      *na;
@@ -137,7 +141,10 @@ RB_TYPE   *pval;
     pix = pixRead("wyom.jpg");
     m = pixGetColorAmapHistogram(pix, 1);
     DisplayMapRGBHistogram(m, "/tmp/lept/map/map4");
-    fprintf(stderr, " Using pixCountRGBColors: %d\n", pixCountRGBColors(pix));
+    pixNumColors(pix, 1, &ncolors);
+    fprintf(stderr, " Using pixNumColors: %d\n", ncolors);
+    pixCountRGBColors(pix, 1, &ncolors);
+    fprintf(stderr, " Using pixCountRGBColors: %d\n", ncolors);
     l_amapDestroy(&m);
     pixDestroy(&pix);
 

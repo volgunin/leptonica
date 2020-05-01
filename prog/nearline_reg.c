@@ -31,6 +31,10 @@
  *   near a specified line.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config_auto.h>
+#endif  /* HAVE_CONFIG_H */
+
 #include "allheaders.h"
 
 l_int32 main(int    argc,
@@ -43,6 +47,11 @@ NUMAA        *naa;
 PIX          *pixs, *pix1, *pix2, *pix3, *pix4;
 L_REGPARAMS  *rp;
 
+#if !defined(HAVE_LIBPNG)
+    L_ERROR("This test requires libpng to run.\n", "nearline_reg");
+    exit(77);
+#endif
+
    if (regTestSetup(argc, argv, &rp))
         return 1;
 
@@ -51,7 +60,8 @@ L_REGPARAMS  *rp;
     pixDisplayWithTitle(pix1, 100, 600, NULL, rp->display);
 
         /* Find averages of min and max along about 120 horizontal lines */
-    fprintf(stderr, "Ignore the following 12 error messages:\n");
+    fprintf(stderr, "******************************************************\n");
+    fprintf(stderr, "* Testing error checking: ignore 12 error messages   *\n");
     na1 = numaCreate(0);
     na3 = numaCreate(0);
     for (y1 = 40; y1 < 575; y1 += 5) {
@@ -90,6 +100,7 @@ L_REGPARAMS  *rp;
                         x1, (l_int32)minave, (l_int32)minave2, (l_int32)maxave);
         }
     }
+    fprintf(stderr, "******************************************************\n");
 
     numaSimilar(na1, na2, 3.0, &similar);  /* should be TRUE */
     regTestCompareValues(rp, similar, 1, 0);  /* 0 */
