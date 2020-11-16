@@ -477,8 +477,8 @@ l_uint8   *linebuf, *data, *rowptr;
 l_uint16   spp, bps, photometry, tiffcomp, orientation, sample_fmt;
 l_uint16  *redmap, *greenmap, *bluemap;
 l_int32    d, wpl, bpl, comptype, i, j, k, ncolors, rval, gval, bval, aval;
-l_int32    xres, yres;
-l_uint32   w, h, tiffbpl, tiffword, read_oriented;
+l_int32    xres, yres, tiffbpl, packedbpl, halfsize;
+l_uint32   w, h, tiffword, read_oriented;
 l_uint32  *line, *ppixel, *tiffdata, *pixdata;
 PIX       *pix, *pix1;
 PIXCMAP   *cmap;
@@ -554,10 +554,25 @@ PIXCMAP   *cmap;
         L_ERROR("height = %d pixels; too large\n", procName, h);
         return NULL;
     }
+
+        /* The relation between the size of a byte buffer required to hold
+           a raster of image pixels (packedbpl) and the size of the tiff
+           buffer (tiffbuf) is either 1:1 or approximately 2:1, depending
+           on how the data is stored and subsampled.  Allow some slop
+           when validating the relation between buffer size and the image
+           parameters w, spp and bps. */
     tiffbpl = TIFFScanlineSize(tif);
-    if (tiffbpl != (bps * spp * w + 7) / 8) {
-        L_ERROR("invalid tiffbpl: tiffbpl = %d, bps = %d, spp = %d, w = %d\n",
-                procName, tiffbpl, bps, spp, w);
+    packedbpl = (bps * spp * w + 7) / 8;
+    halfsize = L_ABS(2 * tiffbpl - packedbpl) <= 8;
+#if 0
+    if (halfsize)
+        L_INFO("packedbpl = %d is approx. twice tiffbpl = %d\n", procName,
+               packedbpl, tiffbpl);
+#endif
+    if (tiffbpl != packedbpl && !halfsize) {
+        L_ERROR("invalid tiffbpl: tiffbpl = %d, packedbpl = %d, "
+                "bps = %d, spp = %d, w = %d\n",
+                procName, tiffbpl, packedbpl, bps, spp, w);
         return NULL;
     }
 
@@ -587,7 +602,7 @@ PIXCMAP   *cmap;
     } else if (spp == 2 && bps == 8) {  /* gray plus alpha */
         L_INFO("gray+alpha is not supported; converting to RGBA\n", procName);
         pixSetSpp(pix, 4);
-        linebuf = (l_uint8 *)LEPT_CALLOC(tiffbpl + 1, sizeof(l_uint8));
+        linebuf = (l_uint8 *)LEPT_CALLOC(2 * tiffbpl + 1, sizeof(l_uint8));
         pixdata = pixGetData(pix);
         for (i = 0; i < h; i++) {
             if (TIFFReadScanline(tif, linebuf, i, 0) < 0) {
@@ -670,7 +685,10 @@ PIXCMAP   *cmap;
         for (i = 0; i < ncolors; i++)
             pixcmapAddColor(cmap, redmap[i] >> 8, greenmap[i] >> 8,
                             bluemap[i] >> 8);
-        pixSetColormap(pix, cmap);
+        if (pixSetColormap(pix, cmap)) {
+            pixDestroy(&pix);
+            return (PIX *)ERROR_PTR("invalid colormap", procName, NULL);
+        }
 
             /* Remove the colormap for 1 bpp. */
         if (bps == 1) {

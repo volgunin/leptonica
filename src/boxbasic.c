@@ -643,11 +643,12 @@ BOX     *boxc;
         return ERROR_INT("boxc not made", procName, 1);
 
     n = boxaGetCount(boxa);
-    if (n >= boxa->nalloc)
-        boxaExtendArray(boxa);
+    if (n >= boxa->nalloc) {
+        if (boxaExtendArray(boxa))
+            return ERROR_INT("extension failed", procName, 1);
+    }
     boxa->box[n] = boxc;
     boxa->n++;
-
     return 0;
 }
 
@@ -1005,19 +1006,22 @@ BOX    **array;
     if (!boxa)
         return ERROR_INT("boxa not defined", procName, 1);
     n = boxaGetCount(boxa);
-    if (index < 0 || index > n)
-        return ERROR_INT("index not in {0...n}", procName, 1);
+    if (index < 0 || index > n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n);
+        return 1;
+    }
     if (!box)
         return ERROR_INT("box not defined", procName, 1);
 
-    if (n >= boxa->nalloc)
-        boxaExtendArray(boxa);
+    if (n >= boxa->nalloc) {
+        if (boxaExtendArray(boxa))
+            return ERROR_INT("extension failed", procName, 1);
+    }
     array = boxa->box;
     boxa->n++;
     for (i = n; i > index; i--)
         array[i] = array[i - 1];
     array[index] = box;
-
     return 0;
 }
 
@@ -1075,8 +1079,10 @@ BOX    **array;
     if (!boxa)
         return ERROR_INT("boxa not defined", procName, 1);
     n = boxaGetCount(boxa);
-    if (index < 0 || index >= n)
-        return ERROR_INT("index not in {0...n - 1}", procName, 1);
+    if (index < 0 || index >= n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n - 1);
+        return 1;
+    }
 
     if (pbox)
         *pbox = boxaGetBox(boxa, index, L_CLONE);
@@ -1356,8 +1362,10 @@ BOXA    *bac;
         bac = boxaCopy(ba, copyflag);
 
     n = boxaaGetCount(baa);
-    if (n >= baa->nalloc)
-        boxaaExtendArray(baa);
+    if (n >= baa->nalloc) {
+        if (boxaaExtendArray(baa))
+            return ERROR_INT("extension failed", procName, 1);
+    }
     baa->boxa[n] = bac;
     baa->n++;
     return 0;
@@ -1625,7 +1633,8 @@ l_int32  i, n;
         /* Extend the ptr array if necessary */
     n = boxaaGetCount(baa);
     if (maxindex < n) return 0;
-    boxaaExtendArrayToSize(baa, maxindex + 1);
+    if (boxaaExtendArrayToSize(baa, maxindex + 1))
+        return ERROR_INT("extension failed", procName, 1);
 
         /* Fill the new entries with copies of boxa */
     for (i = n; i <= maxindex; i++)
@@ -1703,19 +1712,22 @@ BOXA   **array;
     if (!baa)
         return ERROR_INT("baa not defined", procName, 1);
     n = boxaaGetCount(baa);
-    if (index < 0 || index > n)
-        return ERROR_INT("index not in {0...n}", procName, 1);
+    if (index < 0 || index > n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n);
+        return 1;
+    }
     if (!boxa)
         return ERROR_INT("boxa not defined", procName, 1);
 
-    if (n >= baa->nalloc)
-        boxaaExtendArray(baa);
+    if (n >= baa->nalloc) {
+        if (boxaaExtendArray(baa))
+            return ERROR_INT("extension failed", procName, 1);
+    }
     array = baa->boxa;
     baa->n++;
     for (i = n; i > index; i--)
         array[i] = array[i - 1];
     array[index] = boxa;
-
     return 0;
 }
 

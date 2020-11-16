@@ -12,9 +12,9 @@ AUTO_REG_PROGS = adaptmap_reg adaptnorm_reg affine_reg alphaops_reg \
 	binmorph1_reg binmorph3_reg blackwhite_reg \
 	blend1_reg blend2_reg blend3_reg blend4_reg blend5_reg \
 	boxa1_reg boxa2_reg boxa3_reg boxa4_reg bytea_reg \
-	ccthin1_reg ccthin2_reg \
-	checkerboard_reg cmapquant_reg \
-	colorcontent_reg colorinfo_reg \
+	ccbord_reg ccthin1_reg ccthin2_reg \
+	checkerboard_reg circle_reg cmapquant_reg \
+	colorcontent_reg colorfill_reg \
 	coloring_reg colorize_reg \
 	colormask_reg colormorph_reg colorquant_reg \
 	colorseg_reg colorspace_reg compare_reg \
@@ -95,7 +95,7 @@ OTHER_PROGS = adaptmap_dark \
 	fpixcontours gammatest graphicstest graymorphtest \
 	histotest histoduptest htmlviewer \
 	jbcorrelation jbrankhaus jbwords \
-	listtest livre_adapt livre_hmt \
+	listtest lightcolortest livre_adapt livre_hmt \
 	livre_makefigs livre_orient \
 	livre_pageseg livre_seedgen livre_tophat \
 	maketile maptest messagetest misctest1 \
@@ -104,7 +104,8 @@ OTHER_PROGS = adaptmap_dark \
 	pagesegtest1 pagesegtest2 \
 	partifytest partitiontest percolatetest \
 	pixaatest pixafileinfo plottest \
-	printimage printsplitimage printtiff rbtreetest \
+	printimage printsplitimage printtiff \
+	rasteroptest rbtreetest \
 	recog_bootnum1 recog_bootnum2 recog_bootnum3 \
 	recogsort recogtest1 recogtest2 recogtest3 \
 	recogtest4 recogtest5 recogtest6 recogtest7 \
@@ -116,7 +117,8 @@ OTHER_PROGS = adaptmap_dark \
 	scale_it scaletest1 scaletest2 \
 	seedfilltest settest sharptest \
 	sheartest showedges skewtest \
-	sorttest splitimage2pdf sudokutest textorient trctest \
+	sorttest splitimage2pdf sudokutest \
+	textorient tiffpdftest trctest \
 	underlinetest warpertest wordsinorder \
 	writemtiff yuvtest
 

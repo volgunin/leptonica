@@ -652,12 +652,13 @@ PIXCMAP      *cmap = NULL;
            of them. We need to transcode anything with interlacing, an
            alpha channel, or 1 bpp (which would otherwise be photo-inverted).
 
-           Be careful with spp. Any PNG image file with an alpha
-           channel is converted on reading to RGBA (spp == 4). This
-           includes the (gray + alpha) format with spp == 2. You
-           will get different results if you look at spp via
-           readHeaderPng() versus pixGetSpp() */
-    if (format != IFF_PNG || interlaced || bps == 1 || spp == 4 || spp == 2) {
+           Note: any PNG image file with an alpha channel is converted on
+           reading to RGBA (spp == 4). This includes the (gray + alpha) format
+           with spp == 2.  Because of the conversion, readHeaderPng() gives
+           spp = 2, whereas pixGetSpp() gives spp = 4 on the converted pix. */
+    if (format != IFF_PNG ||
+       (format == IFF_PNG && (interlaced || bps == 1 || spp == 4 || spp == 2)))
+    {  /* lgtm+ analyzer needed the logic expanded */
         if (!pixs)
             pix = pixRead(fname);
         else
@@ -1920,7 +1921,7 @@ generatePreXStringsPdf(L_PDF_DATA  *lpd)
 {
 char          buff[256];
 char          buf[L_BIGBUF];
-char         *cstr, *bstr, *fstr, *pstr, *xstr;
+char         *cstr, *bstr, *fstr, *pstr, *xstr, *photometry;
 l_int32       i, cmindex;
 L_COMP_DATA  *cid;
 SARRAY       *sa;
@@ -1943,14 +1944,19 @@ SARRAY       *sa;
             }
             bstr = stringNew("/BitsPerComponent 1\n"
                              "/Interpolate true");
+                /* Note: the reversal is deliberate */
+            photometry = (cid->minisblack) ? stringNew("true")
+                                           : stringNew("false");
             snprintf(buff, sizeof(buff),
                      "/Filter /CCITTFaxDecode\n"
                      "/DecodeParms\n"
                      "<<\n"
+                     "/BlackIs1 %s\n"
                      "/K -1\n"
                      "/Columns %d\n"
-                     ">>", cid->w);
+                     ">>", photometry, cid->w);
             fstr = stringNew(buff);
+            LEPT_FREE(photometry);
         } else if (cid->type == L_JPEG_ENCODE) {
             if (cid->spp == 1)
                 cstr = stringNew("/ColorSpace /DeviceGray");

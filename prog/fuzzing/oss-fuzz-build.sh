@@ -10,6 +10,14 @@ pushd $SRC/zstd
 make -j$(nproc) install PREFIX="$WORK"
 popd
 
+# libjbig
+pushd "$SRC/jbigkit"
+make clean
+make -j$(nproc) lib
+cp "$SRC"/jbigkit/libjbig/*.a "$WORK/lib/"
+cp "$SRC"/jbigkit/libjbig/*.h "$WORK/include/"
+popd
+
 # libjpeg-turbo
 pushd $SRC/libjpeg-turbo
 cmake . -DCMAKE_INSTALL_PREFIX="$WORK" -DENABLE_STATIC:bool=on
@@ -76,7 +84,7 @@ export LEPTONICA_LIBS="$WORK/lib/libjbig.a $WORK/lib/libzstd.a $WORK/lib/libwebp
   --prefix="$WORK" \
   LIBS="$LEPTONICA_LIBS" \
   LDFLAGS="-L$WORK/lib" \
-  CPPFLAGS="-I$WORK/include"
+  CPPFLAGS="-I$WORK/include -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
 make -j$(nproc)
 make install
 
@@ -96,7 +104,25 @@ for f in $SRC/leptonica/prog/fuzzing/*_fuzzer.cc; do
     $LIB_FUZZING_ENGINE
 done
 
+
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/adaptmap_fuzzer_seed_corpus.zip
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/affine_fuzzer_seed_corpus.zip
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/baseline_fuzzer_seed_corpus.zip
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/bilateral_fuzzer_seed_corpus.zip
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/bilinear_fuzzer_seed_corpus.zip
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/binarize_fuzzer_seed_corpus.zip
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/blend_fuzzer_seed_corpus.zip
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/checkerboard_fuzzer_seed_corpus.zip
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/classapp_fuzzer_seed_corpus.zip
+
 cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/pix_rotate_shear_fuzzer_seed_corpus.zip
 cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/enhance_fuzzer_seed_corpus.zip
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/colorquant_fuzzer_seed_corpus.zip
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/dewarp_fuzzer_seed_corpus.zip
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/pix_orient_fuzzer_seed_corpus.zip
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/pixconv_fuzzer_seed_corpus.zip
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/blend_fuzzer_seed_corpus.zip
+cp $SRC/leptonica/prog/fuzzing/general_corpus.zip $OUT/pixMirrorDetectDwa_fuzzer_seed_corpus.zip
 
 cp $SRC/leptonica/prog/fuzzing/pixa_recog_fuzzer_seed_corpus.zip $OUT/
+cp $SRC/leptonica/prog/fuzzing/barcode_fuzzer_seed_corpus.zip $OUT/

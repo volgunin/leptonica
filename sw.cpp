@@ -19,7 +19,7 @@ void build(Solution &s)
         t += "org.sw.demo.webmproject.webp"_dep;
     };
 
-    auto &leptonica = s.addTarget<LibraryTarget>("danbloomberg.leptonica", "1.80.0");
+    auto &leptonica = s.addTarget<LibraryTarget>("danbloomberg.leptonica", "1.81.0");
     leptonica += Git("https://github.com/DanBloomberg/leptonica");
 
     {
@@ -95,12 +95,14 @@ void build(Solution &s)
             {"boxa3_reg", {"boxa3_reg.c"}},
             {"boxa4_reg", {"boxa4_reg.c"}},
             {"bytea_reg", {"bytea_reg.c"}},
+            {"ccbord_reg", {"ccbord_reg.c"}},
             {"ccthin1_reg", {"ccthin1_reg.c"}},
             {"ccthin2_reg", {"ccthin2_reg.c"}},
             {"checkerboard_reg", {"checkerboard_reg.c"}},
+            {"circle_reg", {"circle_reg.c"}},
             {"cmapquant_reg", {"cmapquant_reg.c"}},
             {"colorcontent_reg", {"colorcontent_reg.c"}},
-            {"colorinfo_reg", {"colorinfo_reg.c"}},
+            {"colorfill_reg", {"colorfill_reg.c"}},
             {"coloring_reg", {"coloring_reg.c"}},
             {"colorize_reg", {"colorize_reg.c"}},
             {"colormask_reg", {"colormask_reg.c"}},
@@ -284,6 +286,7 @@ void build(Solution &s)
             {"jbcorrelation", {"jbcorrelation.c"}},
             {"jbrankhaus", {"jbrankhaus.c"}},
             {"jbwords", {"jbwords.c"}},
+            {"lightcolortest", {"lightcolortest.c"}},
             {"listtest", {"listtest.c"}},
             {"livre_adapt", {"livre_adapt.c"}},
             {"livre_hmt", {"livre_hmt.c"}},
@@ -313,6 +316,7 @@ void build(Solution &s)
             {"printimage", {"printimage.c"}},
             {"printsplitimage", {"printsplitimage.c"}},
             {"printtiff", {"printtiff.c"}},
+            {"rasteroptest", {"rasteroptest.c"}},
             {"rbtreetest", {"rbtreetest.c"}},
             {"recog_bootnum1", {"recog_bootnum1.c"}},
             {"recog_bootnum2", {"recog_bootnum2.c"}},
@@ -350,6 +354,7 @@ void build(Solution &s)
             {"splitimage2pdf", {"splitimage2pdf.c"}},
             {"sudokutest", {"sudokutest.c"}},
             {"textorient", {"textorient.c"}},
+            {"tiffpdftest", {"tiffpdftest.c"}},
             {"trctest", {"trctest.c"}},
             {"underlinetest", {"underlinetest.c"}},
             {"warpertest", {"warpertest.c"}},

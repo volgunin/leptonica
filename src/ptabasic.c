@@ -352,12 +352,14 @@ l_int32  n;
         return ERROR_INT("pta not defined", procName, 1);
 
     n = pta->n;
-    if (n >= pta->nalloc)
-        ptaExtendArrays(pta);
+    if (n >= pta->nalloc) {
+        if (ptaExtendArrays(pta))
+            return ERROR_INT("extension failed", procName, 1);
+    }
+
     pta->x[n] = x;
     pta->y[n] = y;
     pta->n++;
-
     return 0;
 }
 
@@ -425,11 +427,15 @@ l_int32  i, n;
     if (!pta)
         return ERROR_INT("pta not defined", procName, 1);
     n = ptaGetCount(pta);
-    if (index < 0 || index > n)
-        return ERROR_INT("index not in {0...n}", procName, 1);
+    if (index < 0 || index > n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n);
+        return 1;
+    }
 
-    if (n > pta->nalloc)
-        ptaExtendArrays(pta);
+    if (n > pta->nalloc) {
+        if (ptaExtendArrays(pta))
+            return ERROR_INT("extension failed", procName, 1);
+    }
     pta->n++;
     for (i = n; i > index; i--) {
         pta->x[i] = pta->x[i - 1];
@@ -466,8 +472,10 @@ l_int32  i, n;
     if (!pta)
         return ERROR_INT("pta not defined", procName, 1);
     n = ptaGetCount(pta);
-    if (index < 0 || index >= n)
-        return ERROR_INT("index not in {0...n - 1}", procName, 1);
+    if (index < 0 || index >= n) {
+        L_ERROR("index %d not in [0,...,%d]\n", procName, index, n - 1);
+        return 1;
+    }
 
         /* Remove the point */
     for (i = index + 1; i < n; i++) {
@@ -1048,11 +1056,13 @@ PTA     *ptac;
     }
 
     n = ptaaGetCount(ptaa);
-    if (n >= ptaa->nalloc)
-        ptaaExtendArray(ptaa);
+    if (n >= ptaa->nalloc) {
+        if (ptaaExtendArray(ptaa))
+            return ERROR_INT("extension failed", procName, 1);
+    }
+
     ptaa->pta[n] = ptac;
     ptaa->n++;
-
     return 0;
 }
 

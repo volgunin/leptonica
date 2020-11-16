@@ -86,9 +86,9 @@
  *
  *      Adaptive contrast normalization
  *          PIX             *pixContrastNorm()          8 bpp
- *          l_int32          pixMinMaxTiles()
- *          l_int32          pixSetLowContrast()
- *          PIX             *pixLinearTRCTiled()
+ *          static l_int32   pixMinMaxTiles()
+ *          static l_int32   pixSetLowContrast()
+ *          static PIX      *pixLinearTRCTiled()
  *          static l_int32  *iaaGetLinearTRC()
  *
  *  Background normalization is done by generating a reduced map (or set
@@ -153,6 +153,12 @@ static const l_int32  DefaultBgVal = 200;       /*!< default bg value      */
 static const l_int32  DefaultXSmoothSize = 2;  /*!< default x smooth size */
 static const l_int32  DefaultYSmoothSize = 1;  /*!< default y smooth size */
 
+static l_int32 pixMinMaxTiles(PIX *pixs, l_int32 sx, l_int32 sy,
+                              l_int32 mindiff, l_int32 smoothx, l_int32 smoothy,
+                              PIX **ppixmin, PIX **ppixmax);
+static l_int32 pixSetLowContrast(PIX *pixs1, PIX *pixs2, l_int32 mindiff);
+static PIX *pixLinearTRCTiled(PIX *pixd, PIX *pixs, l_int32 sx, l_int32 sy,
+                              PIX *pixmin, PIX *pixmax);
 static l_int32 *iaaGetLinearTRC(l_int32 **iaa, l_int32 diff);
 
 #ifndef  NO_CONSOLE_IO
@@ -906,6 +912,8 @@ PIX       *pixd, *piximi, *pixb, *pixf, *pixims;
     pixb = pixThresholdToBinary(pixs, thresh);
     pixf = pixMorphSequence(pixb, "d7.1 + d1.7", 0);
     pixDestroy(&pixb);
+    if (!pixf)
+        return ERROR_INT("pixf not made", procName, 1);
 
 
     /* ------------- Set up the output map pixd --------------- */
@@ -1470,7 +1478,6 @@ pixFillMapHoles(PIX     *pix,
 l_int32   w, h, y, nmiss, goodcol, i, j, found, ival, valtest;
 l_uint32  val, lastval;
 NUMA     *na;  /* indicates if there is any data in the column */
-PIX      *pixt;
 
     PROCNAME("pixFillMapHoles");
 
@@ -1512,7 +1519,6 @@ PIX      *pixt;
             }
         }
     }
-    numaAddNumber(na, 0);  /* last column */
 
     if (nmiss == nx) {  /* no data in any column! */
         numaDestroy(&na);
@@ -1522,7 +1528,6 @@ PIX      *pixt;
 
     /* ---------- Fill in missing columns by replication ----------- */
     if (nmiss > 0) {  /* replicate columns */
-        pixt = pixCopy(NULL, pix);
             /* Find the first good column */
         goodcol = 0;
         for (j = 0; j < w; j++) {
@@ -1533,26 +1538,19 @@ PIX      *pixt;
             }
         }
         if (goodcol > 0) {  /* copy cols backward */
-            for (j = goodcol - 1; j >= 0; j--) {
-                pixRasterop(pix, j, 0, 1, h, PIX_SRC, pixt, j + 1, 0);
-                pixRasterop(pixt, j, 0, 1, h, PIX_SRC, pix, j, 0);
-            }
+            for (j = goodcol - 1; j >= 0; j--)
+                pixRasterop(pix, j, 0, 1, h, PIX_SRC, pix, j + 1, 0);
         }
         for (j = goodcol + 1; j < w; j++) {   /* copy cols forward */
             numaGetIValue(na, j, &ival);
             if (ival == 0) {
                     /* Copy the column to the left of j */
-                pixRasterop(pix, j, 0, 1, h, PIX_SRC, pixt, j - 1, 0);
-                pixRasterop(pixt, j, 0, 1, h, PIX_SRC, pix, j, 0);
+                pixRasterop(pix, j, 0, 1, h, PIX_SRC, pix, j - 1, 0);
             }
         }
-        pixDestroy(&pixt);
     }
     if (w > nx) {  /* replicate the last column */
-        for (i = 0; i < h; i++) {
-            pixGetPixel(pix, w - 2, i, &val);
-            pixSetPixel(pix, w - 1, i, val);
-        }
+        pixRasterop(pix, w - 1, 0, 1, h, PIX_SRC, pix, w - 2, 0);
     }
 
     numaDestroy(&na);
@@ -2654,7 +2652,7 @@ PIX  *pixmin, *pixmax;
  *      (2) See pixContrastNorm() for usage.
  * </pre>
  */
-l_ok
+static l_ok
 pixMinMaxTiles(PIX     *pixs,
                l_int32  sx,
                l_int32  sy,
@@ -2745,7 +2743,7 @@ PIX     *pixmin1, *pixmax1, *pixmin2, *pixmax2;
  *          caller should check return value.
  * </pre>
  */
-l_ok
+static l_ok
 pixSetLowContrast(PIX     *pixs1,
                   PIX     *pixs2,
                   l_int32  mindiff)
@@ -2828,7 +2826,7 @@ l_uint32  *data1, *data2, *line1, *line2;
  *          and stored for reuse in an integer array within the ptr array iaa[].
  * </pre>
  */
-PIX *
+static PIX *
 pixLinearTRCTiled(PIX       *pixd,
                   PIX       *pixs,
                   l_int32    sx,

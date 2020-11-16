@@ -156,9 +156,10 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		blackwhite_reg.c blend1_reg.c blend2_reg.c \
 		blend3_reg.c blend4_reg.c blend5_reg.c \
 		boxa1_reg.c boxa2_reg.c boxa3_reg.c boxa4_reg.c \
-		bytea_reg.c ccthin1_reg.c ccthin2_reg.c \
-		checkerboard_reg.c cmapquant_reg.c colorcontent_reg.c \
-		colorinfo_reg.c coloring_reg.c colorize_reg.c \
+		bytea_reg.c ccbord_reg.c ccthin1_reg.c ccthin2_reg.c \
+		checkerboard_reg.c circle_reg.c \
+		cmapquant_reg.c colorcontent_reg.c \
+		colorfill_reg.c coloring_reg.c colorize_reg.c \
 		colormask_reg.c colormorph_reg.c colorquant_reg.c \
 		colorseg_reg.c colorspace_reg.c \
 		compare_reg.c compfilter_reg.c \
@@ -233,8 +234,8 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		histoduptest.c histotest.c \
 		htmlviewer.c imagetops.c \
 		jbcorrelation.c jbrankhaus.c jbwords.c \
-		listtest.c livre_adapt.c livre_hmt.c \
-		livre_makefigs.c livre_orient.c \
+		lightcolortest.c listtest.c \
+		livre_adapt.c livre_hmt.c livre_makefigs.c livre_orient.c \
 		livre_pageseg.c livre_seedgen.c livre_tophat.c \
 		maketile.c maptest.c messagetest.c misctest1.c \
 		modifyhuesat.c morphtest1.c \
@@ -243,7 +244,7 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		partifytest.c partitiontest.c percolatetest.c \
 		pixaatest.c pixafileinfo.c plottest.c \
 		printimage.c printsplitimage.c printtiff.c \
-		rbtreetest.c \
+		rasteroptest.c rbtreetest.c \
 		recog_bootnum1.c recog_bootnum2.c recog_bootnum3.c \
 		recogsort.c recogtest1.c recogtest2.c recogtest3.c \
 		recogtest4.c recogtest5.c recogtest6.c recogtest7.c \
@@ -256,7 +257,8 @@ SRC =		adaptmap_reg.c adaptnorm_reg.c affine_reg.c \
 		seedfilltest.c settest.c sharptest.c \
 		sheartest.c showedges.c \
 		skewtest.c sorttest.c splitimage2pdf.c \
-		sudokutest.c textorient.c trctest.c \
+		sudokutest.c textorient.c \
+		tiffpdftest.c trctest.c \
 		underlinetest.c warpertest.c wordsinorder.c \
 		writemtiff.c xtractprotos.c yuvtest.c
 
@@ -397,6 +399,9 @@ boxa4_reg:	boxa4_reg.o $(LEPTLIB)
 bytea_reg:	bytea_reg.o $(LEPTLIB)
 	$(CC) -o bytea_reg bytea_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
+ccbord_reg:	ccbord_reg.o $(LEPTLIB)
+	$(CC) -o ccbord_reg ccbord_reg.o $(ALL_LIBS) $(EXTRALIBS)
+
 ccthin1_reg:	ccthin1_reg.o $(LEPTLIB)
 	$(CC) -o ccthin1_reg ccthin1_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
@@ -406,14 +411,17 @@ ccthin2_reg:	ccthin2_reg.o $(LEPTLIB)
 checkerboard_reg:	checkerboard_reg.o $(LEPTLIB)
 	$(CC) -o checkerboard_reg checkerboard_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
+circle_reg:	circle_reg.o $(LEPTLIB)
+	$(CC) -o circle_reg circle_reg.o $(ALL_LIBS) $(EXTRALIBS)
+
 cmapquant_reg:	cmapquant_reg.o $(LEPTLIB)
 	$(CC) -o cmapquant_reg cmapquant_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
 colorcontent_reg:	colorcontent_reg.o $(LEPTLIB)
 	$(CC) -o colorcontent_reg colorcontent_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
-colorinfo_reg:	colorinfo_reg.o $(LEPTLIB)
-	$(CC) -o colorinfo_reg colorinfo_reg.o $(ALL_LIBS) $(EXTRALIBS)
+colorfill_reg:	colorfill_reg.o $(LEPTLIB)
+	$(CC) -o colorfill_reg colorfill_reg.o $(ALL_LIBS) $(EXTRALIBS)
 
 coloring_reg:	coloring_reg.o $(LEPTLIB)
 	$(CC) -o coloring_reg coloring_reg.o $(ALL_LIBS) $(EXTRALIBS)
@@ -973,6 +981,9 @@ jbrankhaus:	jbrankhaus.o $(LEPTLIB)
 jbwords:	jbwords.o $(LEPTLIB)
 	$(CC) -o jbwords jbwords.o $(ALL_LIBS) $(EXTRALIBS)
 
+lightcolortest:	lightcolortest.o $(LEPTLIB)
+	$(CC) -o lightcolortest lightcolortest.o $(ALL_LIBS) $(EXTRALIBS)
+
 listtest:	listtest.o $(LEPTLIB)
 	$(CC) -o listtest listtest.o $(ALL_LIBS) $(EXTRALIBS)
 
@@ -1056,6 +1067,9 @@ printsplitimage:	printsplitimage.o $(LEPTLIB)
 
 printtiff:	printtiff.o $(LEPTLIB)
 	$(CC) -o printtiff printtiff.o $(ALL_LIBS) $(EXTRALIBS)
+
+rasteroptest:	rasteroptest.o $(LEPTLIB)
+	$(CC) -o rasteroptest rasteroptest.o $(ALL_LIBS) $(EXTRALIBS)
 
 rbtreetest:	rbtreetest.o $(LEPTLIB)
 	$(CC) -o rbtreetest rbtreetest.o $(ALL_LIBS) $(EXTRALIBS)
@@ -1161,6 +1175,9 @@ sudokutest:	sudokutest.o $(LEPTLIB)
 
 textorient:	textorient.o $(LEPTLIB)
 	$(CC) -o textorient textorient.o $(ALL_LIBS) $(EXTRALIBS)
+
+tiffpdftest:	tiffpdftest.o $(LEPTLIB)
+	$(CC) -o tiffpdftest tiffpdftest.o $(ALL_LIBS) $(EXTRALIBS)
 
 trctest:	trctest.o $(LEPTLIB)
 	$(CC) -o trctest trctest.o $(ALL_LIBS) $(EXTRALIBS)

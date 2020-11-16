@@ -1,5 +1,5 @@
 #include "string.h"
-#include "allheaders.h"
+#include "leptfuzz.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -12,8 +12,10 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         if(size<3) return 0;
         PIX *pix, *pix0, *pix1, *pix2, *pix3, *pix4;
 
-        pix = pixReadMem(data, size);
-        if(pix==NULL) return 0;
+        leptSetStdNullHandler();
+
+        pix = pixReadMemSpix(data, size);
+        if (pix == NULL) return 0;
         
         pix0 = pixModifyHue(NULL, pix, 0.01 + 0.05 * 1);
         pix1 = pixModifySaturation(NULL, pix, -0.9 + 0.1 * 1);

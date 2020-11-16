@@ -599,11 +599,13 @@ SEL     *csel;
         csel->name = stringNew(selname);
 
     n = selaGetCount(sela);
-    if (n >= sela->nalloc)
-        selaExtendArray(sela);
+    if (n >= sela->nalloc) {
+        if (selaExtendArray(sela))
+            return ERROR_INT("extension failed", procName, 1);
+    }
+
     sela->sel[n] = csel;
     sela->n++;
-
     return 0;
 }
 
@@ -1414,7 +1416,7 @@ SEL   *sel;
 SEL  *
 selReadStream(FILE  *fp)
 {
-char    *selname;
+char     selname[256];
 char     linebuf[256];
 l_int32  sy, sx, cy, cx, i, j, version, ignore;
 SEL     *sel;
@@ -1431,19 +1433,14 @@ SEL     *sel;
 
     if (fgets(linebuf, sizeof(linebuf), fp) == NULL)
         return (SEL *)ERROR_PTR("error reading into linebuf", procName, NULL);
-    selname = stringNew(linebuf);
     sscanf(linebuf, "  ------  %200s  ------", selname);
 
     if (fscanf(fp, "  sy = %d, sx = %d, cy = %d, cx = %d\n",
-            &sy, &sx, &cy, &cx) != 4) {
-        LEPT_FREE(selname);
+               &sy, &sx, &cy, &cx) != 4)
         return (SEL *)ERROR_PTR("dimensions not read", procName, NULL);
-    }
 
-    if ((sel = selCreate(sy, sx, selname)) == NULL) {
-        LEPT_FREE(selname);
+    if ((sel = selCreate(sy, sx, selname)) == NULL)
         return (SEL *)ERROR_PTR("sel not made", procName, NULL);
-    }
     selSetOrigin(sel, cy, cx);
 
     for (i = 0; i < sy; i++) {
@@ -1454,7 +1451,6 @@ SEL     *sel;
     }
     ignore = fscanf(fp, "\n");
 
-    LEPT_FREE(selname);
     return sel;
 }
 

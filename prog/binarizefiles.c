@@ -44,7 +44,7 @@
 l_int32 main(int    argc,
              char **argv)
 {
-char         buf[256], dirname[256];
+char         buf[512], dirname[256];
 char        *dirin, *pattern, *subdirout, *fname, *tail, *basename;
 l_int32      thresh, i, n;
 l_float32    scalefactor;
@@ -53,7 +53,7 @@ SARRAY      *sa;
 static char  mainName[] = "binarizefiles.c";
 
     if (argc != 6) {
-        fprintf(stderr,
+        lept_stderr(
             "Syntax: binarizefiles dirin pattern thresh scalefact dirout\n"
             "      dirin: input directory for image files\n"
             "      pattern: use 'allfiles' to convert all files\n"
@@ -84,7 +84,7 @@ static char  mainName[] = "binarizefiles.c";
 
         /* Write the output files */
     makeTempDirname(dirname, 256, subdirout);
-    fprintf(stderr, "dirname: %s\n", dirname);
+    lept_stderr("dirname: %s\n", dirname);
     lept_mkdir(subdirout);
     for (i = 0; i < n; i++) {
         fname = sarrayGetString(sa, i, L_NOCOPY);
@@ -97,7 +97,7 @@ static char  mainName[] = "binarizefiles.c";
         snprintf(buf, sizeof(buf), "%s/%s.tif", dirname, basename);
         lept_free(tail);
         lept_free(basename);
-        fprintf(stderr, "fileout: %s\n", buf);
+        lept_stderr("fileout: %s\n", buf);
         if (scalefactor != 1.0)
             pix2 = pixScale(pix1, scalefactor, scalefactor);
         else
